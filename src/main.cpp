@@ -10,6 +10,13 @@
 #include "web.h"
 #include "rc_input.h"
 
+// 可选: 本地 WiFi 种子凭据 (src/secrets.h, 已 git 忽略, 不入库)
+#if defined(__has_include)
+#  if __has_include("secrets.h")
+#    include "secrets.h"
+#  endif
+#endif
+
 static void selectBootPreset() {
   if (cfg.presetCount == 0) return;
   uint8_t idx;
@@ -31,6 +38,17 @@ void setup() {
   Serial.println(F("\n[Solis] boot: stage3 wifi+web+ota"));
 
   ConfigStore::begin();
+
+#ifdef SEED_WIFI_SSID
+  // 仅当尚未配网时, 用本地 secrets.h 的凭据种入 NVS (凭据不在固件源码/git 中)
+  if (cfg.wifiSsid[0] == 0) {
+    strncpy(cfg.wifiSsid, SEED_WIFI_SSID, sizeof(cfg.wifiSsid) - 1);
+    strncpy(cfg.wifiPass, SEED_WIFI_PASS, sizeof(cfg.wifiPass) - 1);
+    ConfigStore::save();
+    Serial.println("[WiFi] seeded credentials from secrets.h");
+  }
+#endif
+
   LedEngine::begin();
   selectBootPreset();
 

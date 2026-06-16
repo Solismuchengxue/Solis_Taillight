@@ -40,6 +40,7 @@ struct RcConfig {
   uint16_t centerUs;        // 油门中位脉宽, 通常 1500
   uint16_t brakeUs;         // 油门脉宽低于(中位-此值)判为刹车
   uint8_t  brakeLedPin;     // 刹车灯带数据脚
+  uint16_t brakeLedCount;   // 刹车灯带灯珠数量
   uint8_t  brakePreset;     // 刹车触发时显示的预设索引
   // 转向 (两独立通道; 琥珀色流水)
   bool     turnEnabled;     // 启用转向
@@ -50,6 +51,7 @@ struct RcConfig {
   uint16_t turnTriggerUs;   // 脉宽高于此值视为"按下/接通"
   uint16_t turnHoldMs;      // 点动模式: 触发后保持时长 (默认 3000)
   uint8_t  turnLedPin;      // 转向灯带数据脚
+  uint16_t turnLedCount;    // 转向灯带灯珠数量
   uint8_t  turnPreset;      // 转向触发时显示的预设索引
 };
 

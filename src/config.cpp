@@ -38,6 +38,7 @@ static void setDefaults() {
   cfg.rc.centerUs      = 1500;
   cfg.rc.brakeUs       = 250;     // 油门低于 1250us 判刹车
   cfg.rc.brakeLedPin   = 3;       // 默认与装饰灯共用 GPIO3
+  cfg.rc.brakeLedCount = 6;
   cfg.rc.brakePreset   = 0;
   cfg.rc.turnEnabled   = false;
   cfg.rc.turnReverse   = false;
@@ -47,6 +48,7 @@ static void setDefaults() {
   cfg.rc.turnTriggerUs = 1700;    // 脉宽 >1700us 视为按下
   cfg.rc.turnHoldMs    = 3000;    // 点动触发后保持 3 秒
   cfg.rc.turnLedPin    = 3;       // 默认与装饰灯共用 GPIO3
+  cfg.rc.turnLedCount  = 6;
   cfg.rc.turnPreset    = 0;
 
   cfg.wifiSsid[0] = 0;

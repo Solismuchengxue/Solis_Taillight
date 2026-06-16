@@ -41,9 +41,9 @@
   <fieldset class="grid2">
     <legend>装饰灯</legend>
     <label>灯条数据脚 GPIO <input type="number" id="ledPin" min="0" max="21"></label>
+    <label>灯珠数量 <input type="number" id="ledCount" min="1" max="300"></label>
     <label>默认预设 <select id="defaultPreset"></select></label>
     <label class="row"><input type="checkbox" id="rotate"> 上电轮换灯效</label>
-    <label>灯珠数量 <input type="number" id="ledCount" min="1" max="300"></label>
     <button id="saveDeco" class="primary">保存装饰灯设置</button>
   </fieldset>
 
@@ -52,14 +52,15 @@
     <legend>转向 (两独立通道)</legend>
     <label class="row full"><input type="checkbox" id="rcTurnEnabled"> 启用转向</label>
     <label>灯条数据脚 GPIO <input type="number" id="rcTurnLedPin" min="0" max="21"></label>
+    <label>灯珠数量 <input type="number" id="rcTurnCount" min="1" max="300"></label>
+    <label>左转脚 GPIO <input type="number" id="rcLeftPin" min="0" max="21"></label>
+    <label>右转脚 GPIO <input type="number" id="rcRightPin" min="0" max="21"></label>
     <label>触发模式 <select id="rcTurnMode">
       <option value="0">点动 (按一下亮几秒)</option>
       <option value="1">两点 (接通就亮, 断开就灭)</option>
     </select></label>
-    <label>左转脚 GPIO <input type="number" id="rcLeftPin" min="0" max="21"></label>
-    <label>右转脚 GPIO <input type="number" id="rcRightPin" min="0" max="21"></label>
-    <label>触发阈值 (us) <input type="number" id="rcTurnTrig"></label>
     <label>保持时长 (ms) <input type="number" id="rcTurnHold"></label>
+    <label>触发阈值 (us) <input type="number" id="rcTurnTrig"></label>
     <label class="row full"><input type="checkbox" id="rcTurnReverse"> 灯效反向 (翻转流水方向)</label>
     <p class="hint">转向灯固定为<b>琥珀色流水</b>(交通标准)。灯带装反或流水方向不对就勾「灯效反向」。点动: 脉宽高过阈值算「按下」, 按一下流水「保持时长」后自停; 两点: 高电平流水、低电平灭。</p>
     <button id="saveTurn" class="primary">保存转向设置</button>
@@ -70,6 +71,7 @@
     <legend>刹车 (复用油门通道, 实时)</legend>
     <label class="row full"><input type="checkbox" id="rcBrakeEnabled"> 启用刹车</label>
     <label>灯条数据脚 GPIO <input type="number" id="rcBrakeLedPin" min="0" max="21"></label>
+    <label>灯珠数量 <input type="number" id="rcBrakeCount" min="1" max="300"></label>
     <label>油门脚 GPIO <input type="number" id="rcBrakePin" min="0" max="21"></label>
     <label>中位 (us) <input type="number" id="rcCenter"></label>
     <label>刹车阈值 (us) <input type="number" id="rcBrake"></label>

@@ -91,6 +91,7 @@ function load(s) {
   $('#rcTurnEnabled').checked = rc.turnEnabled;
   $('#rcTurnReverse').checked = rc.turnReverse;
   $('#rcTurnLedPin').value = rc.turnLedPin;
+  $('#rcTurnCount').value = rc.turnLedCount;
   $('#rcTurnMode').value = rc.turnMode;
   $('#rcTurnHold').value = rc.turnHoldMs;
   $('#rcLeftPin').value = rc.leftPin;
@@ -100,6 +101,7 @@ function load(s) {
   $('#rcBrakeEnabled').checked = rc.brakeEnabled;
   $('#rcBrakeReverse').checked = rc.brakeReverse;
   $('#rcBrakeLedPin').value = rc.brakeLedPin;
+  $('#rcBrakeCount').value = rc.brakeLedCount;
   $('#rcBrakePin').value = rc.brakePin;
   $('#rcCenter').value = rc.centerUs;
   $('#rcBrake').value = rc.brakeUs;
@@ -131,7 +133,7 @@ $('#saveDeco').onclick = async () => {
 $('#saveTurn').onclick = async () => {
   await api('/api/rc', {
     turnEnabled:$('#rcTurnEnabled').checked, turnReverse:$('#rcTurnReverse').checked,
-    turnLedPin:+$('#rcTurnLedPin').value,
+    turnLedPin:+$('#rcTurnLedPin').value, turnLedCount:+$('#rcTurnCount').value,
     turnMode:+$('#rcTurnMode').value, leftPin:+$('#rcLeftPin').value,
     rightPin:+$('#rcRightPin').value, turnTriggerUs:+$('#rcTurnTrig').value,
     turnHoldMs:+$('#rcTurnHold').value });
@@ -142,7 +144,7 @@ $('#saveTurn').onclick = async () => {
 $('#saveBrake').onclick = async () => {
   await api('/api/rc', {
     brakeEnabled:$('#rcBrakeEnabled').checked, brakeReverse:$('#rcBrakeReverse').checked,
-    brakeLedPin:+$('#rcBrakeLedPin').value,
+    brakeLedPin:+$('#rcBrakeLedPin').value, brakeLedCount:+$('#rcBrakeCount').value,
     brakePin:+$('#rcBrakePin').value, centerUs:+$('#rcCenter').value,
     brakeUs:+$('#rcBrake').value });
   alert('已保存, 设备重启生效中…');

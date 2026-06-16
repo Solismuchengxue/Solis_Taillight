@@ -2,3 +2,4 @@
 .vscode/
 *.bin
 .claude/settings.local.json
+src/secrets.h

@@ -5,8 +5,8 @@
 static CRGB     renderBuf[3][MAX_LEDS];
 static CRGB     showBuf[3][MAX_LEDS];
 static uint8_t  stripPin[3];
+static uint16_t stripCount[3];        // 每条灯带各自的灯珠数量
 static int      nStrips = 0;
-static uint16_t count   = 6;
 
 static Preset   decoPreset;          // 装饰灯当前预设
 static bool     brakeOn = false, turnLeft = false, turnRight = false;
@@ -28,10 +28,16 @@ static void addStrip(uint8_t pin, CRGB* buf) {
   }
 }
 
-// 取/建该数据脚对应的灯带下标
-static int stripFor(uint8_t pin) {
-  for (int i = 0; i < nStrips; i++) if (stripPin[i] == pin) return i;
-  if (nStrips < 3) { stripPin[nStrips] = pin; addStrip(pin, showBuf[nStrips]); return nStrips++; }
+// 取/建该数据脚对应的灯带下标; 共用同一脚时取较大的灯珠数量
+static int stripFor(uint8_t pin, uint16_t cnt) {
+  cnt = constrain(cnt, (uint16_t)1, (uint16_t)MAX_LEDS);
+  for (int i = 0; i < nStrips; i++)
+    if (stripPin[i] == pin) { if (cnt > stripCount[i]) stripCount[i] = cnt; return i; }
+  if (nStrips < 3) {
+    stripPin[nStrips] = pin; stripCount[nStrips] = cnt;
+    addStrip(pin, showBuf[nStrips]);
+    return nStrips++;
+  }
   return 0;
 }
 
@@ -41,12 +47,11 @@ static const Preset& presetAt(uint8_t idx) {
 }
 
 void LedEngine::begin() {
-  count = constrain(cfg.ledCount, (uint16_t)1, (uint16_t)MAX_LEDS);
   FastLED.clear(true);
   nStrips = 0;
-  stripFor(cfg.ledPin);                       // 装饰灯(基础层)优先注册
-  if (cfg.rc.turnEnabled)  stripFor(cfg.rc.turnLedPin);
-  if (cfg.rc.brakeEnabled) stripFor(cfg.rc.brakeLedPin);
+  stripFor(cfg.ledPin, cfg.ledCount);                       // 装饰灯(基础层)优先注册
+  if (cfg.rc.turnEnabled)  stripFor(cfg.rc.turnLedPin,  cfg.rc.turnLedCount);
+  if (cfg.rc.brakeEnabled) stripFor(cfg.rc.brakeLedPin, cfg.rc.brakeLedCount);
   FastLED.setBrightness(255);                 // 全局不限亮, 亮度按预设逐条缩放
   applyPreset(presetAt(cfg.defaultPreset));
 }
@@ -121,42 +126,44 @@ static const CRGB TRAFFIC_AMBER(255, 110, 0);
 #define TURN_TAIL 4              // 流水拖尾长度(LED)
 
 void LedEngine::loop() {
-  // 转向流水推进 (~70ms/格)
-  static uint16_t turnHead = 0;
+  // 转向流水推进 (~70ms/格, 自由计数, 各灯带按自身长度取模)
+  static uint32_t turnHead = 0;
   static uint32_t lastTurnMs = 0;
   uint32_t nowMs = millis();
-  if (nowMs - lastTurnMs > 70) { turnHead = (turnHead + 1) % count; lastTurnMs = nowMs; }
+  if (nowMs - lastTurnMs > 70) { turnHead++; lastTurnMs = nowMs; }
 
   for (int s = 0; s < nStrips; s++) {
     uint8_t pin = stripPin[s];
+    uint16_t cnt = stripCount[s];
     // 优先级: 刹车 > 转向 > 装饰
     if (brakeOn && cfg.rc.brakeEnabled && cfg.rc.brakeLedPin == pin) {
-      fill_solid(showBuf[s], count, CRGB::Red);                          // 刹车: 满红常亮(全亮)
+      fill_solid(showBuf[s], cnt, CRGB::Red);                            // 刹车: 满红常亮(全亮)
     } else if ((turnLeft || turnRight) && cfg.rc.turnEnabled && cfg.rc.turnLedPin == pin) {
       if (turnLeft && turnRight) {
         // 双闪: 整条琥珀闪烁(无方向)
-        fill_solid(showBuf[s], count, ((millis() / 333) % 2 == 0) ? TRAFFIC_AMBER : CRGB::Black);
+        fill_solid(showBuf[s], cnt, ((millis() / 333) % 2 == 0) ? TRAFFIC_AMBER : CRGB::Black);
       } else {
         // 单向流水: 左/右方向相反; turnReverse 适配灯带装向
         bool rev = turnLeft ^ cfg.rc.turnReverse;
-        int h = rev ? (count - 1 - turnHead) : turnHead;
-        for (uint16_t i = 0; i < count; i++) {
+        int head = turnHead % cnt;
+        int h = rev ? (cnt - 1 - head) : head;
+        for (uint16_t i = 0; i < cnt; i++) {
           int d = rev ? ((int)i - h) : (h - (int)i);
-          if (d < 0) d += count;                                         // 环绕
+          if (d < 0) d += cnt;                                           // 环绕
           uint8_t v = (d < TURN_TAIL) ? (uint8_t)(255 - d * (256 / TURN_TAIL)) : 0;
           showBuf[s][i] = TRAFFIC_AMBER;
           showBuf[s][i].nscale8_video(v);
         }
       }
     } else if (cfg.ledPin == pin) {
-      renderEffect(renderBuf[s], count, decoPreset);                     // 装饰: 按预设(逐条缩放亮度)
+      renderEffect(renderBuf[s], cnt, decoPreset);                       // 装饰: 按预设(逐条缩放亮度)
       uint8_t br = decoPreset.brightness;
-      for (uint16_t i = 0; i < count; i++) {
+      for (uint16_t i = 0; i < cnt; i++) {
         showBuf[s][i] = renderBuf[s][i];
         if (br < 255) showBuf[s][i].nscale8_video(br);
       }
     } else {
-      fill_solid(showBuf[s], count, CRGB::Black);   // 该脚无激活功能 → 灭
+      fill_solid(showBuf[s], cnt, CRGB::Black);   // 该脚无激活功能 → 灭
     }
   }
   FastLED.show();
