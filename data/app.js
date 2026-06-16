@@ -86,17 +86,16 @@ function load(s) {
   $('#apFallback').checked = s.wifi.apFallback;
   // 预设表 (内部会填充各"默认预设"下拉)
   renderPresets();
-  // 转向
-  const rc = s.rc;
-  $('#rcTurnEnabled').checked = rc.turnEnabled;
-  $('#rcTurnReverse').checked = rc.turnReverse;
-  $('#rcTurnLedPin').value = rc.turnLedPin;
-  $('#rcTurnCount').value = rc.turnLedCount;
-  $('#rcTurnMode').value = rc.turnMode;
-  $('#rcTurnHold').value = rc.turnHoldMs;
-  $('#rcLeftPin').value = rc.leftPin;
-  $('#rcRightPin').value = rc.rightPin;
-  $('#rcTurnTrig').value = rc.turnTriggerUs;
+  // 转向 (左/右各自独立)
+  const rc = s.rc, L = rc.left, R = rc.right;
+  $('#rcLEn').checked = L.enabled;   $('#rcLLedPin').value = L.ledPin;
+  $('#rcLCount').value = L.ledCount; $('#rcLChan').value = L.channelPin;
+  $('#rcLMode').value = L.mode;      $('#rcLHold').value = L.holdMs;
+  $('#rcLTrig').value = L.triggerUs; $('#rcLReverse').checked = L.reverse;
+  $('#rcREn').checked = R.enabled;   $('#rcRLedPin').value = R.ledPin;
+  $('#rcRCount').value = R.ledCount; $('#rcRChan').value = R.channelPin;
+  $('#rcRMode').value = R.mode;      $('#rcRHold').value = R.holdMs;
+  $('#rcRTrig').value = R.triggerUs; $('#rcRReverse').checked = R.reverse;
   // 刹车
   $('#rcBrakeEnabled').checked = rc.brakeEnabled;
   $('#rcBrakeReverse').checked = rc.brakeReverse;
@@ -129,14 +128,19 @@ $('#saveDeco').onclick = async () => {
   alert('已保存, 设备重启生效中…');
 };
 
-// 转向 (保存后设备重启重建灯带)
-$('#saveTurn').onclick = async () => {
-  await api('/api/rc', {
-    turnEnabled:$('#rcTurnEnabled').checked, turnReverse:$('#rcTurnReverse').checked,
-    turnLedPin:+$('#rcTurnLedPin').value, turnLedCount:+$('#rcTurnCount').value,
-    turnMode:+$('#rcTurnMode').value, leftPin:+$('#rcLeftPin').value,
-    rightPin:+$('#rcRightPin').value, turnTriggerUs:+$('#rcTurnTrig').value,
-    turnHoldMs:+$('#rcTurnHold').value });
+// 转向左/右 (保存后设备重启重建灯带)
+$('#saveLeft').onclick = async () => {
+  await api('/api/rc', { left:{
+    enabled:$('#rcLEn').checked, ledPin:+$('#rcLLedPin').value, ledCount:+$('#rcLCount').value,
+    channelPin:+$('#rcLChan').value, mode:+$('#rcLMode').value, holdMs:+$('#rcLHold').value,
+    triggerUs:+$('#rcLTrig').value, reverse:$('#rcLReverse').checked }});
+  alert('已保存, 设备重启生效中…');
+};
+$('#saveRight').onclick = async () => {
+  await api('/api/rc', { right:{
+    enabled:$('#rcREn').checked, ledPin:+$('#rcRLedPin').value, ledCount:+$('#rcRCount').value,
+    channelPin:+$('#rcRChan').value, mode:+$('#rcRMode').value, holdMs:+$('#rcRHold').value,
+    triggerUs:+$('#rcRTrig').value, reverse:$('#rcRReverse').checked }});
   alert('已保存, 设备重启生效中…');
 };
 

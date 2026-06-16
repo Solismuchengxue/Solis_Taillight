@@ -68,17 +68,19 @@ static void buildState(JsonDocument& d) {
   rc["centerUs"]      = cfg.rc.centerUs;
   rc["brakeUs"]       = cfg.rc.brakeUs;
   rc["brakeLedPin"]   = cfg.rc.brakeLedPin;
-  rc["brakePreset"]   = cfg.rc.brakePreset;
-  rc["turnEnabled"]   = cfg.rc.turnEnabled;
-  rc["turnReverse"]   = cfg.rc.turnReverse;
-  rc["turnLedCount"]  = cfg.rc.turnLedCount;
-  rc["turnMode"]      = cfg.rc.turnMode;
-  rc["leftPin"]       = cfg.rc.leftPin;
-  rc["rightPin"]      = cfg.rc.rightPin;
-  rc["turnTriggerUs"] = cfg.rc.turnTriggerUs;
-  rc["turnHoldMs"]    = cfg.rc.turnHoldMs;
-  rc["turnLedPin"]    = cfg.rc.turnLedPin;
-  rc["turnPreset"]    = cfg.rc.turnPreset;
+
+  auto putTurn = [](JsonObject o, const TurnSide& t) {
+    o["enabled"]    = t.enabled;
+    o["channelPin"] = t.channelPin;
+    o["ledPin"]     = t.ledPin;
+    o["ledCount"]   = t.ledCount;
+    o["mode"]       = t.mode;
+    o["triggerUs"]  = t.triggerUs;
+    o["holdMs"]     = t.holdMs;
+    o["reverse"]    = t.reverse;
+  };
+  putTurn(rc["left"].to<JsonObject>(),  cfg.rc.left);
+  putTurn(rc["right"].to<JsonObject>(), cfg.rc.right);
 
   d["maxPresets"] = MAX_PRESETS;
   d["maxLeds"]    = MAX_LEDS;
@@ -203,17 +205,19 @@ void Web::begin() {
       if (d["centerUs"].is<int>())        rc.centerUs = d["centerUs"];
       if (d["brakeUs"].is<int>())         rc.brakeUs = d["brakeUs"];
       if (d["brakeLedPin"].is<int>())     rc.brakeLedPin = d["brakeLedPin"];
-      if (d["brakePreset"].is<int>())     rc.brakePreset = d["brakePreset"];
-      if (d["turnEnabled"].is<bool>())    rc.turnEnabled = d["turnEnabled"];
-      if (d["turnReverse"].is<bool>())    rc.turnReverse = d["turnReverse"];
-      if (d["turnLedCount"].is<int>())    rc.turnLedCount = d["turnLedCount"];
-      if (d["turnMode"].is<int>())        rc.turnMode = d["turnMode"];
-      if (d["leftPin"].is<int>())         rc.leftPin = d["leftPin"];
-      if (d["rightPin"].is<int>())        rc.rightPin = d["rightPin"];
-      if (d["turnTriggerUs"].is<int>())   rc.turnTriggerUs = d["turnTriggerUs"];
-      if (d["turnHoldMs"].is<int>())      rc.turnHoldMs = d["turnHoldMs"];
-      if (d["turnLedPin"].is<int>())      rc.turnLedPin = d["turnLedPin"];
-      if (d["turnPreset"].is<int>())      rc.turnPreset = d["turnPreset"];
+
+      auto getTurn = [](JsonObject o, TurnSide& t) {
+        if (o["enabled"].is<bool>())    t.enabled = o["enabled"];
+        if (o["channelPin"].is<int>())  t.channelPin = o["channelPin"];
+        if (o["ledPin"].is<int>())      t.ledPin = o["ledPin"];
+        if (o["ledCount"].is<int>())    t.ledCount = o["ledCount"];
+        if (o["mode"].is<int>())        t.mode = o["mode"];
+        if (o["triggerUs"].is<int>())   t.triggerUs = o["triggerUs"];
+        if (o["holdMs"].is<int>())      t.holdMs = o["holdMs"];
+        if (o["reverse"].is<bool>())    t.reverse = o["reverse"];
+      };
+      if (d["left"].is<JsonObject>())  getTurn(d["left"].as<JsonObject>(),  rc.left);
+      if (d["right"].is<JsonObject>()) getTurn(d["right"].as<JsonObject>(), rc.right);
       ConfigStore::save();
       sendState(req);
       scheduleReboot();              // 引脚/灯带变更需重启重建灯带与中断

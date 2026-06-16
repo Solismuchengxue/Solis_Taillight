@@ -32,6 +32,8 @@ fieldset.grid2 select{width:100%}
 fieldset.grid2 .hint,fieldset.grid2 .full{grid-column:1/-1}
 fieldset.grid2 button{grid-column:1/-1;justify-self:start;margin:8px 0 2px}
 ul{list-style:none;padding:0}
+.cardrow{display:flex;gap:10px;align-items:flex-start}
+.cardrow>fieldset{flex:1;min-width:0;margin:12px 0}
 .rotrow{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:12px 0}
 .rotrow label{margin:0}
 .rotrow select{width:auto;margin:0}

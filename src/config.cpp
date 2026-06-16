@@ -40,16 +40,24 @@ static void setDefaults() {
   cfg.rc.brakeLedPin   = 3;       // 默认与装饰灯共用 GPIO3
   cfg.rc.brakeLedCount = 6;
   cfg.rc.brakePreset   = 0;
-  cfg.rc.turnEnabled   = false;
-  cfg.rc.turnReverse   = false;
-  cfg.rc.turnMode      = TURN_MOMENTARY;
-  cfg.rc.leftPin       = 5;       // 左转独立通道
-  cfg.rc.rightPin      = 6;       // 右转独立通道
-  cfg.rc.turnTriggerUs = 1700;    // 脉宽 >1700us 视为按下
-  cfg.rc.turnHoldMs    = 3000;    // 点动触发后保持 3 秒
-  cfg.rc.turnLedPin    = 3;       // 默认与装饰灯共用 GPIO3
-  cfg.rc.turnLedCount  = 6;
-  cfg.rc.turnPreset    = 0;
+  // 左转
+  cfg.rc.left.enabled    = false;
+  cfg.rc.left.channelPin = 5;
+  cfg.rc.left.ledPin     = 5;
+  cfg.rc.left.ledCount   = 6;
+  cfg.rc.left.mode       = TURN_MOMENTARY;
+  cfg.rc.left.triggerUs  = 1700;
+  cfg.rc.left.holdMs     = 3000;
+  cfg.rc.left.reverse    = false;
+  // 右转 (默认流水方向与左相反)
+  cfg.rc.right.enabled    = false;
+  cfg.rc.right.channelPin = 6;
+  cfg.rc.right.ledPin     = 6;
+  cfg.rc.right.ledCount   = 6;
+  cfg.rc.right.mode       = TURN_MOMENTARY;
+  cfg.rc.right.triggerUs  = 1700;
+  cfg.rc.right.holdMs     = 3000;
+  cfg.rc.right.reverse    = true;
 
   cfg.wifiSsid[0] = 0;
   cfg.wifiPass[0] = 0;

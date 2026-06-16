@@ -47,26 +47,50 @@
     <button id="saveDeco" class="primary">保存装饰灯设置</button>
   </fieldset>
 
-  <!-- 转向 -->
-  <fieldset class="grid2">
-    <legend>转向 (两独立通道)</legend>
-    <label class="row full"><input type="checkbox" id="rcTurnEnabled"> 启用转向</label>
-    <label>灯条数据脚 GPIO <input type="number" id="rcTurnLedPin" min="0" max="21"></label>
-    <label>灯珠数量 <input type="number" id="rcTurnCount" min="1" max="300"></label>
-    <label>左转脚 GPIO <input type="number" id="rcLeftPin" min="0" max="21"></label>
-    <label>右转脚 GPIO <input type="number" id="rcRightPin" min="0" max="21"></label>
-    <label>触发模式 <select id="rcTurnMode">
-      <option value="0">点动 (按一下亮几秒)</option>
-      <option value="1">两点 (接通就亮, 断开就灭)</option>
-    </select></label>
-    <label>保持时长 (ms) <input type="number" id="rcTurnHold"></label>
-    <label>触发阈值 (us) <input type="number" id="rcTurnTrig"></label>
-    <label class="row full"><input type="checkbox" id="rcTurnReverse"> 灯效反向 (翻转流水方向)</label>
-    <p class="hint">转向灯固定为<b>琥珀色流水</b>(交通标准)。灯带装反或流水方向不对就勾「灯效反向」。点动: 脉宽高过阈值算「按下」, 按一下流水「保持时长」后自停; 两点: 高电平流水、低电平灭。</p>
-    <button id="saveTurn" class="primary">保存转向设置</button>
+  <!-- 转向: 左/右各自独立, 左右并排 -->
+  <div class="cardrow">
+    <fieldset>
+      <legend>左转</legend>
+      <label class="row"><input type="checkbox" id="rcLEn"> 启用左转</label>
+      <label>灯条数据脚 GPIO <input type="number" id="rcLLedPin" min="0" max="21"></label>
+      <label>灯珠数量 <input type="number" id="rcLCount" min="1" max="300"></label>
+      <label>触发脚 GPIO <input type="number" id="rcLChan" min="0" max="21"></label>
+      <label>触发模式 <select id="rcLMode">
+        <option value="0">点动</option>
+        <option value="1">两点</option>
+      </select></label>
+      <label>保持时长 (ms) <input type="number" id="rcLHold"></label>
+      <label>触发阈值 (us) <input type="number" id="rcLTrig"></label>
+      <label class="row"><input type="checkbox" id="rcLReverse"> 灯效反向</label>
+      <button id="saveLeft" class="primary">保存左转</button>
+    </fieldset>
+    <fieldset>
+      <legend>右转</legend>
+      <label class="row"><input type="checkbox" id="rcREn"> 启用右转</label>
+      <label>灯条数据脚 GPIO <input type="number" id="rcRLedPin" min="0" max="21"></label>
+      <label>灯珠数量 <input type="number" id="rcRCount" min="1" max="300"></label>
+      <label>触发脚 GPIO <input type="number" id="rcRChan" min="0" max="21"></label>
+      <label>触发模式 <select id="rcRMode">
+        <option value="0">点动</option>
+        <option value="1">两点</option>
+      </select></label>
+      <label>保持时长 (ms) <input type="number" id="rcRHold"></label>
+      <label>触发阈值 (us) <input type="number" id="rcRTrig"></label>
+      <label class="row"><input type="checkbox" id="rcRReverse"> 灯效反向</label>
+      <button id="saveRight" class="primary">保存右转</button>
+    </fieldset>
+  </div>
+  <p class="hint">转向固定为<b>琥珀色流水</b>(交通标准)。左右各自独立灯带/通道。点动: 按一下流水「保持时长」后自停; 两点: 接通持续流水、断开即灭。流水方向不对就勾「灯效反向」。改数据脚/启用后设备重启重建灯带。</p>
+
+  <!-- 实时脉宽监视 (中间) -->
+  <fieldset>
+    <legend>实时脉宽监视 (标定用)</legend>
+    <p>油门: <b id="liveBrake">—</b> &nbsp; 左: <b id="liveLeft">—</b> &nbsp; 右: <b id="liveRight">—</b> us</p>
+    <p>当前判定: <b id="liveState">—</b></p>
+    <p class="hint">拨动遥控器/按转向键, 看脉宽数值, 据此设上面的阈值。</p>
   </fieldset>
 
-  <!-- 刹车 -->
+  <!-- 刹车 (下边) -->
   <fieldset class="grid2">
     <legend>刹车 (复用油门通道, 实时)</legend>
     <label class="row full"><input type="checkbox" id="rcBrakeEnabled"> 启用刹车</label>
@@ -76,15 +100,8 @@
     <label>中位 (us) <input type="number" id="rcCenter"></label>
     <label>刹车阈值 (us) <input type="number" id="rcBrake"></label>
     <label class="row full"><input type="checkbox" id="rcBrakeReverse"> 刹车方向反向 (杆量高于中位判刹车)</label>
-    <p class="hint">刹车灯固定为<b>红色常亮</b>(交通标准)。默认油门<b>低于</b>「中位 − 阈值」点亮; 若你的杆量1000是前进, 勾选「方向反向」改成<b>高于</b>「中位 + 阈值」点亮。改数据脚/启用后设备会重启重建灯带。</p>
+    <p class="hint">刹车灯固定为<b>红色常亮</b>(交通标准)。默认油门<b>低于</b>「中位 − 阈值」点亮; 若你的杆量1000是前进, 勾选「方向反向」改成<b>高于</b>「中位 + 阈值」点亮。</p>
     <button id="saveBrake" class="primary">保存刹车设置</button>
-  </fieldset>
-
-  <fieldset>
-    <legend>实时脉宽监视 (标定用)</legend>
-    <p>油门: <b id="liveBrake">—</b> &nbsp; 左: <b id="liveLeft">—</b> &nbsp; 右: <b id="liveRight">—</b> us</p>
-    <p>当前判定: <b id="liveState">—</b></p>
-    <p class="hint">拨动遥控器/按转向键, 看脉宽数值, 据此设上面的阈值。</p>
   </fieldset>
 </section>
 

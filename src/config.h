@@ -32,6 +32,18 @@ struct Preset {
 // 数据脚与装饰灯相同则共用同一条灯带。
 enum TurnMode : uint8_t { TURN_MOMENTARY = 0, TURN_MAINTAINED = 1 };  // 点动 / 两点(保持)
 
+// 一侧转向 (左或右): 各自独立的灯带与触发通道; 琥珀色流水
+struct TurnSide {
+  bool     enabled;         // 启用本侧
+  uint8_t  channelPin;      // RC 触发通道输入脚
+  uint8_t  ledPin;          // 灯带数据脚
+  uint16_t ledCount;        // 灯珠数量
+  uint8_t  mode;            // TurnMode: 点动 / 两点
+  uint16_t triggerUs;       // 脉宽高于此值视为"按下/接通"
+  uint16_t holdMs;          // 点动模式: 触发后保持时长
+  bool     reverse;         // 灯效反向: 翻转流水方向
+};
+
 struct RcConfig {
   // 刹车 (复用油门通道, 电平实时判定; 红色常亮, 无方向)
   bool     brakeEnabled;    // 启用刹车
@@ -41,18 +53,10 @@ struct RcConfig {
   uint16_t brakeUs;         // 油门脉宽低于(中位-此值)判为刹车
   uint8_t  brakeLedPin;     // 刹车灯带数据脚
   uint16_t brakeLedCount;   // 刹车灯带灯珠数量
-  uint8_t  brakePreset;     // 刹车触发时显示的预设索引
-  // 转向 (两独立通道; 琥珀色流水)
-  bool     turnEnabled;     // 启用转向
-  bool     turnReverse;     // 灯效反向: 翻转琥珀流水方向(适配灯带装向)
-  uint8_t  turnMode;        // TurnMode: 点动(3s自停) / 两点(高亮低灭)
-  uint8_t  leftPin;         // 左转通道输入脚
-  uint8_t  rightPin;        // 右转通道输入脚
-  uint16_t turnTriggerUs;   // 脉宽高于此值视为"按下/接通"
-  uint16_t turnHoldMs;      // 点动模式: 触发后保持时长 (默认 3000)
-  uint8_t  turnLedPin;      // 转向灯带数据脚
-  uint16_t turnLedCount;    // 转向灯带灯珠数量
-  uint8_t  turnPreset;      // 转向触发时显示的预设索引
+  uint8_t  brakePreset;     // (保留, 未用)
+  // 转向: 左/右各自独立
+  TurnSide left;
+  TurnSide right;
 };
 
 // 全局配置

@@ -2,10 +2,11 @@
 #include <FastLED.h>
 
 // 每条物理灯带: 渲染缓冲(全亮度, 灯效在此持续演化) + 显示缓冲(按预设亮度缩放后送 FastLED)
-static CRGB     renderBuf[3][MAX_LEDS];
-static CRGB     showBuf[3][MAX_LEDS];
-static uint8_t  stripPin[3];
-static uint16_t stripCount[3];        // 每条灯带各自的灯珠数量
+#define MAX_STRIPS 4                  // 装饰 + 左转 + 右转 + 刹车
+static CRGB     renderBuf[MAX_STRIPS][MAX_LEDS];
+static CRGB     showBuf[MAX_STRIPS][MAX_LEDS];
+static uint8_t  stripPin[MAX_STRIPS];
+static uint16_t stripCount[MAX_STRIPS];   // 每条灯带各自的灯珠数量
 static int      nStrips = 0;
 
 static Preset   decoPreset;          // 装饰灯当前预设
@@ -33,7 +34,7 @@ static int stripFor(uint8_t pin, uint16_t cnt) {
   cnt = constrain(cnt, (uint16_t)1, (uint16_t)MAX_LEDS);
   for (int i = 0; i < nStrips; i++)
     if (stripPin[i] == pin) { if (cnt > stripCount[i]) stripCount[i] = cnt; return i; }
-  if (nStrips < 3) {
+  if (nStrips < MAX_STRIPS) {
     stripPin[nStrips] = pin; stripCount[nStrips] = cnt;
     addStrip(pin, showBuf[nStrips]);
     return nStrips++;
@@ -50,8 +51,9 @@ void LedEngine::begin() {
   FastLED.clear(true);
   nStrips = 0;
   stripFor(cfg.ledPin, cfg.ledCount);                       // 装饰灯(基础层)优先注册
-  if (cfg.rc.turnEnabled)  stripFor(cfg.rc.turnLedPin,  cfg.rc.turnLedCount);
-  if (cfg.rc.brakeEnabled) stripFor(cfg.rc.brakeLedPin, cfg.rc.brakeLedCount);
+  if (cfg.rc.left.enabled)  stripFor(cfg.rc.left.ledPin,  cfg.rc.left.ledCount);
+  if (cfg.rc.right.enabled) stripFor(cfg.rc.right.ledPin, cfg.rc.right.ledCount);
+  if (cfg.rc.brakeEnabled)  stripFor(cfg.rc.brakeLedPin,  cfg.rc.brakeLedCount);
   FastLED.setBrightness(255);                 // 全局不限亮, 亮度按预设逐条缩放
   applyPreset(presetAt(cfg.defaultPreset));
 }
@@ -135,25 +137,27 @@ void LedEngine::loop() {
   for (int s = 0; s < nStrips; s++) {
     uint8_t pin = stripPin[s];
     uint16_t cnt = stripCount[s];
+    // 本数据脚上各功能是否激活
+    bool bk = brakeOn   && cfg.rc.brakeEnabled && cfg.rc.brakeLedPin   == pin;
+    bool lt = turnLeft  && cfg.rc.left.enabled  && cfg.rc.left.ledPin  == pin;
+    bool rt = turnRight && cfg.rc.right.enabled && cfg.rc.right.ledPin == pin;
     // 优先级: 刹车 > 转向 > 装饰
-    if (brakeOn && cfg.rc.brakeEnabled && cfg.rc.brakeLedPin == pin) {
-      fill_solid(showBuf[s], cnt, CRGB::Red);                            // 刹车: 满红常亮(全亮)
-    } else if ((turnLeft || turnRight) && cfg.rc.turnEnabled && cfg.rc.turnLedPin == pin) {
-      if (turnLeft && turnRight) {
-        // 双闪: 整条琥珀闪烁(无方向)
-        fill_solid(showBuf[s], cnt, ((millis() / 333) % 2 == 0) ? TRAFFIC_AMBER : CRGB::Black);
-      } else {
-        // 单向流水: 左/右方向相反; turnReverse 适配灯带装向
-        bool rev = turnLeft ^ cfg.rc.turnReverse;
-        int head = turnHead % cnt;
-        int h = rev ? (cnt - 1 - head) : head;
-        for (uint16_t i = 0; i < cnt; i++) {
-          int d = rev ? ((int)i - h) : (h - (int)i);
-          if (d < 0) d += cnt;                                           // 环绕
-          uint8_t v = (d < TURN_TAIL) ? (uint8_t)(255 - d * (256 / TURN_TAIL)) : 0;
-          showBuf[s][i] = TRAFFIC_AMBER;
-          showBuf[s][i].nscale8_video(v);
-        }
+    if (bk) {
+      fill_solid(showBuf[s], cnt, CRGB::Red);                            // 刹车: 满红常亮
+    } else if (lt && rt) {
+      // 左右同脚同时激活(双闪): 整条琥珀闪烁
+      fill_solid(showBuf[s], cnt, ((millis() / 333) % 2 == 0) ? TRAFFIC_AMBER : CRGB::Black);
+    } else if (lt || rt) {
+      // 单向流水: 各自 reverse 决定方向
+      bool rev = lt ? cfg.rc.left.reverse : cfg.rc.right.reverse;
+      int head = turnHead % cnt;
+      int h = rev ? (cnt - 1 - head) : head;
+      for (uint16_t i = 0; i < cnt; i++) {
+        int d = rev ? ((int)i - h) : (h - (int)i);
+        if (d < 0) d += cnt;                                             // 环绕
+        uint8_t v = (d < TURN_TAIL) ? (uint8_t)(255 - d * (256 / TURN_TAIL)) : 0;
+        showBuf[s][i] = TRAFFIC_AMBER;
+        showBuf[s][i].nscale8_video(v);
       }
     } else if (cfg.ledPin == pin) {
       renderEffect(renderBuf[s], cnt, decoPreset);                       // 装饰: 按预设(逐条缩放亮度)
