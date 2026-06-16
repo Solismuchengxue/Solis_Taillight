@@ -22,9 +22,32 @@ button.primary{background:var(--acc);color:#fff}
 button.danger{background:#7a1f1f;color:#fff}
 .hint{font-size:12px;color:var(--mut)}
 fieldset{border:1px solid #2a2e37;border-radius:10px;margin:12px 0;padding:10px 14px}
-legend{color:var(--mut);font-size:13px;padding:0 6px}
+legend{color:var(--fg);font-size:15px;font-weight:700;padding:0 8px 0 10px;border-left:3px solid var(--acc);letter-spacing:.3px}
+/* 紧凑两列卡片 */
+fieldset.grid2{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;align-items:end}
+fieldset.grid2 legend{grid-column:1/-1}
+fieldset.grid2 label{margin:6px 0}
+fieldset.grid2 label.row{align-self:center}
+fieldset.grid2 select{width:100%}
+fieldset.grid2 .hint,fieldset.grid2 .full{grid-column:1/-1}
+fieldset.grid2 button{grid-column:1/-1;justify-self:start;margin:8px 0 2px}
 ul{list-style:none;padding:0}
-#presetList li{display:flex;gap:8px;align-items:center;background:var(--card);padding:8px;border-radius:8px;margin:6px 0}
-#presetList input[type=text]{width:90px}
-#presetList .sw{width:18px;height:18px;border-radius:4px;border:1px solid #444}
+.rotrow{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.rotrow label{margin:0}
+.rotrow select{width:auto;margin:0}
+.tablewrap{overflow-x:auto;margin:10px 0}
+#presetTable{width:100%;border-collapse:collapse;font-size:13px}
+#presetTable th{color:var(--mut);font-weight:normal;font-size:12px;padding:4px 3px;text-align:left;border-bottom:1px solid #2a2e37}
+#presetTable td{padding:4px 3px;vertical-align:middle}
+#presetTable tr.filled{background:var(--card)}
+#presetTable input,#presetTable select{margin:0}
+#presetTable input[type=text]{width:64px}
+#presetTable input[type=number]{width:62px}
+#presetTable input[type=color]{width:34px;height:30px;padding:1px}
+#presetTable select{width:80px}
+#presetTable .prev{background:var(--acc);color:#fff;padding:6px 8px;margin:0}
+#presetTable .del{background:#5a2020;color:#fff;padding:6px 9px;margin:0}
+#presetTable tr.empty td{text-align:center;border:1px dashed #3a3f48;background:#181b21}
+.addslot{background:none;color:var(--mut);font-size:20px;line-height:1;width:100%;margin:0;padding:6px}
+.addslot:hover{color:var(--fg)}
 progress{width:100%;margin-top:8px}

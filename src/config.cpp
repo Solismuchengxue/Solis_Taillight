@@ -31,16 +31,23 @@ static void setDefaults() {
   cfg.rotateOnBoot  = false;
   cfg.currentPreset = 0;
 
-  // RC 默认 (停用, 引脚预置为规划值)
-  cfg.rc.enabled       = false;
-  cfg.rc.invert        = false;   // 直连(信号实测~3.5V, 3.3V级), 不反相; 若改用反相缓冲再置true
+  // RC 默认 (停用, 引脚预置为规划值; 直连不反相)
+  cfg.rc.brakeEnabled  = false;
+  cfg.rc.brakeReverse  = false;   // 默认油门低于中位判刹车
   cfg.rc.brakePin      = 4;       // 油门通道(刹车)
   cfg.rc.centerUs      = 1500;
   cfg.rc.brakeUs       = 250;     // 油门低于 1250us 判刹车
+  cfg.rc.brakeLedPin   = 3;       // 默认与装饰灯共用 GPIO3
+  cfg.rc.brakePreset   = 0;
+  cfg.rc.turnEnabled   = false;
+  cfg.rc.turnReverse   = false;
+  cfg.rc.turnMode      = TURN_MOMENTARY;
   cfg.rc.leftPin       = 5;       // 左转独立通道
   cfg.rc.rightPin      = 6;       // 右转独立通道
   cfg.rc.turnTriggerUs = 1700;    // 脉宽 >1700us 视为按下
-  cfg.rc.turnHoldMs    = 3000;    // 触发后保持 3 秒
+  cfg.rc.turnHoldMs    = 3000;    // 点动触发后保持 3 秒
+  cfg.rc.turnLedPin    = 3;       // 默认与装饰灯共用 GPIO3
+  cfg.rc.turnPreset    = 0;
 
   cfg.wifiSsid[0] = 0;
   cfg.wifiPass[0] = 0;

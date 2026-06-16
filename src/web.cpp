@@ -24,7 +24,7 @@ void Web::loop() {
 }
 
 static const char* effectNames[FX_COUNT] = {
-  "Solid", "Breathe", "Rainbow", "Scanner", "Blink", "Sparkle", "Comet"
+  "Solid", "Breathe", "Rainbow", "Scanner", "Blink", "Sparkle", "Comet→", "Comet←"
 };
 
 // ---------- 工具: 整套状态 -> JSON ----------
@@ -61,15 +61,22 @@ static void buildState(JsonDocument& d) {
   for (uint8_t i = 0; i < FX_COUNT; i++) fx.add(effectNames[i]);
 
   auto rc = d["rc"].to<JsonObject>();
-  rc["enabled"]       = cfg.rc.enabled;
-  rc["invert"]        = cfg.rc.invert;
+  rc["brakeEnabled"]  = cfg.rc.brakeEnabled;
+  rc["brakeReverse"]  = cfg.rc.brakeReverse;
   rc["brakePin"]      = cfg.rc.brakePin;
   rc["centerUs"]      = cfg.rc.centerUs;
   rc["brakeUs"]       = cfg.rc.brakeUs;
+  rc["brakeLedPin"]   = cfg.rc.brakeLedPin;
+  rc["brakePreset"]   = cfg.rc.brakePreset;
+  rc["turnEnabled"]   = cfg.rc.turnEnabled;
+  rc["turnReverse"]   = cfg.rc.turnReverse;
+  rc["turnMode"]      = cfg.rc.turnMode;
   rc["leftPin"]       = cfg.rc.leftPin;
   rc["rightPin"]      = cfg.rc.rightPin;
   rc["turnTriggerUs"] = cfg.rc.turnTriggerUs;
   rc["turnHoldMs"]    = cfg.rc.turnHoldMs;
+  rc["turnLedPin"]    = cfg.rc.turnLedPin;
+  rc["turnPreset"]    = cfg.rc.turnPreset;
 
   d["maxPresets"] = MAX_PRESETS;
   d["maxLeds"]    = MAX_LEDS;
@@ -129,8 +136,8 @@ void Web::begin() {
       if (d["count"].is<int>())      cfg.ledCount = constrain((int)d["count"], 1, MAX_LEDS);
       if (d["brightness"].is<int>()) cfg.brightness = d["brightness"];
       ConfigStore::save();
-      LedEngine::reinit();
       sendState(req);
+      scheduleReboot();              // 数据脚/数量变更需重启重建灯带
     }));
 
   // --- 预设列表(整表替换) ---
@@ -170,8 +177,7 @@ void Web::begin() {
       p.b          = d["b"] | 0;
       p.speed      = d["speed"] | 128;
       p.brightness = d["brightness"] | 200;
-      LedEngine::setOverlay(OV_NONE);
-      LedEngine::applyPreset(p);
+      LedEngine::applyPreset(p);     // 预览显示在装饰灯上
       ok(req);
     }));
 
@@ -188,18 +194,25 @@ void Web::begin() {
   server.on("/api/rc", HTTP_POST, [](AsyncWebServerRequest* r){}, nullptr,
     jsonBody([](AsyncWebServerRequest* req, JsonDocument& d) {
       RcConfig& rc = cfg.rc;
-      if (d["enabled"].is<bool>())        rc.enabled = d["enabled"];
-      if (d["invert"].is<bool>())         rc.invert = d["invert"];
+      if (d["brakeEnabled"].is<bool>())   rc.brakeEnabled = d["brakeEnabled"];
+      if (d["brakeReverse"].is<bool>())   rc.brakeReverse = d["brakeReverse"];
       if (d["brakePin"].is<int>())        rc.brakePin = d["brakePin"];
       if (d["centerUs"].is<int>())        rc.centerUs = d["centerUs"];
       if (d["brakeUs"].is<int>())         rc.brakeUs = d["brakeUs"];
+      if (d["brakeLedPin"].is<int>())     rc.brakeLedPin = d["brakeLedPin"];
+      if (d["brakePreset"].is<int>())     rc.brakePreset = d["brakePreset"];
+      if (d["turnEnabled"].is<bool>())    rc.turnEnabled = d["turnEnabled"];
+      if (d["turnReverse"].is<bool>())    rc.turnReverse = d["turnReverse"];
+      if (d["turnMode"].is<int>())        rc.turnMode = d["turnMode"];
       if (d["leftPin"].is<int>())         rc.leftPin = d["leftPin"];
       if (d["rightPin"].is<int>())        rc.rightPin = d["rightPin"];
       if (d["turnTriggerUs"].is<int>())   rc.turnTriggerUs = d["turnTriggerUs"];
       if (d["turnHoldMs"].is<int>())      rc.turnHoldMs = d["turnHoldMs"];
+      if (d["turnLedPin"].is<int>())      rc.turnLedPin = d["turnLedPin"];
+      if (d["turnPreset"].is<int>())      rc.turnPreset = d["turnPreset"];
       ConfigStore::save();
-      RcInput::begin();              // 立即按新引脚/开关重挂中断
       sendState(req);
+      scheduleReboot();              // 引脚/灯带变更需重启重建灯带与中断
     }));
 
   // --- RC 实时脉宽监视 (标定阈值用, 前端轮询) ---

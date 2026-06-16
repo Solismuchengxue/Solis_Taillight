@@ -31,9 +31,10 @@ static inline void IRAM_ATTR edge(Channel& ch, uint8_t pin, bool activeHigh) {
   }
 }
 
-static void IRAM_ATTR isrBrake() { edge(chBrake, cfg.rc.brakePin, !cfg.rc.invert); }
-static void IRAM_ATTR isrLeft()  { edge(chLeft,  cfg.rc.leftPin,  !cfg.rc.invert); }
-static void IRAM_ATTR isrRight() { edge(chRight, cfg.rc.rightPin, !cfg.rc.invert); }
+// 直连方案: 信号高电平为脉冲 (active-high), 不再做信号反相
+static void IRAM_ATTR isrBrake() { edge(chBrake, cfg.rc.brakePin, true); }
+static void IRAM_ATTR isrLeft()  { edge(chLeft,  cfg.rc.leftPin,  true); }
+static void IRAM_ATTR isrRight() { edge(chRight, cfg.rc.rightPin, true); }
 
 static uint16_t pulseOf(const Channel& ch) {
   return (millis() - ch.lastMs < 500) ? ch.width : 0;
@@ -46,18 +47,23 @@ void RcInput::begin() {
   prevLeft = prevRight = false;
   leftUntil = rightUntil = 0;
 
-  if (!cfg.rc.enabled) { stState = "off"; return; }
+  if (!cfg.rc.brakeEnabled && !cfg.rc.turnEnabled) { stState = "off"; return; }
 
-  pinMode(cfg.rc.brakePin, INPUT);
-  pinMode(cfg.rc.leftPin,  INPUT);
-  pinMode(cfg.rc.rightPin, INPUT);
-  attachInterrupt(cfg.rc.brakePin, isrBrake, CHANGE);
-  attachInterrupt(cfg.rc.leftPin,  isrLeft,  CHANGE);
-  attachInterrupt(cfg.rc.rightPin, isrRight, CHANGE);
-  aBrake = cfg.rc.brakePin; aLeft = cfg.rc.leftPin; aRight = cfg.rc.rightPin;
-  Serial.printf("[RC] enabled: brake=GPIO%u left=GPIO%u right=GPIO%u invert=%d hold=%ums\n",
-                cfg.rc.brakePin, cfg.rc.leftPin, cfg.rc.rightPin,
-                cfg.rc.invert, cfg.rc.turnHoldMs);
+  if (cfg.rc.brakeEnabled) {
+    pinMode(cfg.rc.brakePin, INPUT);
+    attachInterrupt(cfg.rc.brakePin, isrBrake, CHANGE);
+    aBrake = cfg.rc.brakePin;
+  }
+  if (cfg.rc.turnEnabled) {
+    pinMode(cfg.rc.leftPin,  INPUT);
+    pinMode(cfg.rc.rightPin, INPUT);
+    attachInterrupt(cfg.rc.leftPin,  isrLeft,  CHANGE);
+    attachInterrupt(cfg.rc.rightPin, isrRight, CHANGE);
+    aLeft = cfg.rc.leftPin; aRight = cfg.rc.rightPin;
+  }
+  Serial.printf("[RC] brake=%d(GPIO%u) turn=%d(L%u R%u mode=%u) \n",
+                cfg.rc.brakeEnabled, cfg.rc.brakePin,
+                cfg.rc.turnEnabled, cfg.rc.leftPin, cfg.rc.rightPin, cfg.rc.turnMode);
 }
 
 uint16_t RcInput::brakePulse() { return pulseOf(chBrake); }
@@ -66,37 +72,45 @@ uint16_t RcInput::rightPulse() { return pulseOf(chRight); }
 const char* RcInput::stateName(){ return stState; }
 
 bool RcInput::hasSignal() {
-  if (!cfg.rc.enabled) return false;
+  if (!cfg.rc.brakeEnabled && !cfg.rc.turnEnabled) return false;
   return brakePulse() || leftPulse() || rightPulse();
 }
 
 void RcInput::loop() {
-  if (!cfg.rc.enabled) return;             // 停用时完全不干预常规灯效
-
   const RcConfig& rc = cfg.rc;
+  if (!rc.brakeEnabled && !rc.turnEnabled) return;   // 全停用时不干预常规灯效
   uint32_t now = millis();
 
-  // 转向点动: 检测"按下"上升沿, 触发一次 turnHoldMs 保持窗口
-  bool lPressed = leftPulse()  && leftPulse()  > rc.turnTriggerUs;
-  bool rPressed = rightPulse() && rightPulse() > rc.turnTriggerUs;
-  if (lPressed && !prevLeft)  leftUntil  = now + rc.turnHoldMs;
-  if (rPressed && !prevRight) rightUntil = now + rc.turnHoldMs;
-  prevLeft = lPressed; prevRight = rPressed;
-  bool lActive = (int32_t)(now - leftUntil)  < 0;
-  bool rActive = (int32_t)(now - rightUntil) < 0;
+  // 刹车: 油门偏离中位超过阈值, 电平实时; brakeReverse 决定判定在中位哪一侧
+  bool brakeActive = false;
+  if (rc.brakeEnabled) {
+    int bW = brakePulse();
+    if (bW) brakeActive = rc.brakeReverse ? (bW > (int)rc.centerUs + (int)rc.brakeUs)
+                                          : (bW < (int)rc.centerUs - (int)rc.brakeUs);
+    LedEngine::setBrake(brakeActive);
+  }
 
-  // 刹车: 油门低于 (中位 - 刹车阈值), 电平实时
-  uint16_t bW = brakePulse();
-  bool brakeActive = bW && bW < (int)rc.centerUs - (int)rc.brakeUs;
+  // 转向: 点动(上升沿触发保持 turnHoldMs) 或 两点(高亮低灭)
+  bool lActive = false, rActive = false;
+  if (rc.turnEnabled) {
+    bool lPressed = leftPulse()  && leftPulse()  > rc.turnTriggerUs;
+    bool rPressed = rightPulse() && rightPulse() > rc.turnTriggerUs;
+    if (rc.turnMode == TURN_MAINTAINED) {
+      lActive = lPressed; rActive = rPressed;             // 保持式
+    } else {
+      if (lPressed && !prevLeft)  leftUntil  = now + rc.turnHoldMs;
+      if (rPressed && !prevRight) rightUntil = now + rc.turnHoldMs;
+      lActive = (int32_t)(now - leftUntil)  < 0;          // 点动定时
+      rActive = (int32_t)(now - rightUntil) < 0;
+    }
+    prevLeft = lPressed; prevRight = rPressed;
+    LedEngine::setTurn(lActive, rActive);
+  }
 
-  // 优先级: 刹车 > 双闪 > 单向转向
-  Overlay ov; const char* st;
-  if (brakeActive)            { ov = OV_BRAKE;  st = "brake";  }
-  else if (lActive && rActive){ ov = OV_HAZARD; st = "hazard"; }
-  else if (lActive)           { ov = OV_LEFT;   st = "left";   }
-  else if (rActive)           { ov = OV_RIGHT;  st = "right";  }
-  else                        { ov = OV_NONE;   st = "none";   }
-
-  stState = st;
-  if (LedEngine::overlay() != ov) LedEngine::setOverlay(ov);
+  // 状态名(实时监视用); 显示优先级 刹车 > 转向
+  if      (brakeActive)        stState = "brake";
+  else if (lActive && rActive) stState = "hazard";
+  else if (lActive)            stState = "left";
+  else if (rActive)            stState = "right";
+  else                         stState = "none";
 }

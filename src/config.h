@@ -11,7 +11,8 @@ enum EffectId : uint8_t {
   FX_SCANNER,     // 来回扫描 (KITT)
   FX_BLINK,       // 闪烁
   FX_SPARKLE,     // 随机闪烁
-  FX_COMET,       // 彗星拖尾
+  FX_COMET,       // 彗星拖尾 (正向)
+  FX_COMET_REV,   // 彗星拖尾 (反向)
   FX_COUNT        // 灯效总数 (放最后)
 };
 
@@ -27,18 +28,29 @@ struct Preset {
 #define MAX_PRESETS 12
 #define MAX_LEDS    300       // 灯珠数量上限 (静态缓冲), 实际用 ledCount
 
-// RC 转向/刹车联动配置
-// 刹车: 复用油门通道(电平实时判定)。转向: 两个独立通道, 点动触发后保持 turnHoldMs。
+// RC 转向/刹车联动配置 (刹车/转向各自独立启用、独立信号反相、独立灯带与预设)
+// 数据脚与装饰灯相同则共用同一条灯带。
+enum TurnMode : uint8_t { TURN_MOMENTARY = 0, TURN_MAINTAINED = 1 };  // 点动 / 两点(保持)
+
 struct RcConfig {
-  bool     enabled;         // 是否启用 RC 联动
-  bool     invert;          // 信号是否反相 (直连=false; 反相缓冲=true)
-  uint8_t  brakePin;        // 刹车: 油门通道输入脚
+  // 刹车 (复用油门通道, 电平实时判定; 红色常亮, 无方向)
+  bool     brakeEnabled;    // 启用刹车
+  bool     brakeReverse;    // 刹车方向反向: 默认油门低于中位判刹车, 勾选则高于中位判刹车
+  uint8_t  brakePin;        // 油门通道输入脚
   uint16_t centerUs;        // 油门中位脉宽, 通常 1500
   uint16_t brakeUs;         // 油门脉宽低于(中位-此值)判为刹车
-  uint8_t  leftPin;         // 左转: 独立通道输入脚 (点动)
-  uint8_t  rightPin;        // 右转: 独立通道输入脚 (点动)
-  uint16_t turnTriggerUs;   // 脉宽高于此值视为"按下"触发
-  uint16_t turnHoldMs;      // 触发后转向灯效保持时长 (默认 3000)
+  uint8_t  brakeLedPin;     // 刹车灯带数据脚
+  uint8_t  brakePreset;     // 刹车触发时显示的预设索引
+  // 转向 (两独立通道; 琥珀色流水)
+  bool     turnEnabled;     // 启用转向
+  bool     turnReverse;     // 灯效反向: 翻转琥珀流水方向(适配灯带装向)
+  uint8_t  turnMode;        // TurnMode: 点动(3s自停) / 两点(高亮低灭)
+  uint8_t  leftPin;         // 左转通道输入脚
+  uint8_t  rightPin;        // 右转通道输入脚
+  uint16_t turnTriggerUs;   // 脉宽高于此值视为"按下/接通"
+  uint16_t turnHoldMs;      // 点动模式: 触发后保持时长 (默认 3000)
+  uint8_t  turnLedPin;      // 转向灯带数据脚
+  uint8_t  turnPreset;      // 转向触发时显示的预设索引
 };
 
 // 全局配置

@@ -19,82 +19,99 @@ $$('.tab').forEach(t => t.onclick = () => {
   $('#' + t.dataset.tab).classList.add('active');
 });
 
-function fillEffects(sel, names) {
-  sel.innerHTML = names.map((n,i) => `<option value="${i}">${n}</option>`).join('');
-}
+const SLOTS = 5;   // 固定 5 个轮换槽位
 
 function renderPresets() {
-  const ul = $('#presetList'); ul.innerHTML = '';
-  const dp = $('#defaultPreset'); dp.innerHTML = '';
-  state.presets.forEach((p,i) => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="sw" style="background:${rgb2hex(p.r,p.g,p.b)}"></span>
-      <input type="text" value="${p.name}" data-i="${i}" data-k="name">
-      <select data-i="${i}" data-k="effect">${state.effects.map((n,j)=>`<option value="${j}" ${j==p.effect?'selected':''}>${n}</option>`).join('')}</select>
-      <input type="color" value="${rgb2hex(p.r,p.g,p.b)}" data-i="${i}" data-k="color">
-      <button data-del="${i}">✕</button>`;
-    ul.appendChild(li);
-    dp.innerHTML += `<option value="${i}" ${i==state.defaultPreset?'selected':''}>${p.name}</option>`;
+  const tb = $('#presetBody'); tb.innerHTML = '';
+  for (let i = 0; i < SLOTS; i++) {
+    const tr = document.createElement('tr');
+    if (i < state.presets.length) {
+      const p = state.presets[i];
+      tr.className = 'filled';
+      const opts = state.effects.map((n,j)=>`<option value="${j}" ${j==p.effect?'selected':''}>${n}</option>`).join('');
+      tr.innerHTML = `
+        <td><input type="text" value="${p.name}" data-i="${i}" data-k="name"></td>
+        <td><select data-i="${i}" data-k="effect">${opts}</select></td>
+        <td><input type="color" value="${rgb2hex(p.r,p.g,p.b)}" data-i="${i}" data-k="color"></td>
+        <td><input type="number" min="0" max="255" value="${p.speed}" data-i="${i}" data-k="speed"></td>
+        <td><input type="number" min="0" max="255" value="${p.brightness}" data-i="${i}" data-k="bright"></td>
+        <td><button class="prev" data-i="${i}">预览</button></td>
+        <td><button class="del" data-i="${i}">✕</button></td>`;
+    } else {
+      tr.className = 'empty';
+      tr.innerHTML = `<td colspan="7"><button class="addslot">＋</button></td>`;
+    }
+    tb.appendChild(tr);
+  }
+  tb.querySelectorAll('.del').forEach(b => b.onclick = () => {
+    collectPresets();                       // 删除前保住其它行的编辑
+    state.presets.splice(+b.dataset.i, 1);
+    renderPresets();
   });
-  ul.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
-    state.presets.splice(+b.dataset.del,1); renderPresets();
+  tb.querySelectorAll('.addslot').forEach(b => b.onclick = () => {
+    collectPresets();
+    state.presets.push({ name:'新预设', effect:0, r:255, g:0, b:0, speed:128, brightness:200 });
+    renderPresets();
   });
+  tb.querySelectorAll('.prev').forEach(b => b.onclick = () => api('/api/apply', readRow(+b.dataset.i)));
+  fillPresetSelects();
+}
+
+// 用预设列表填充三个"默认预设"下拉(装饰/转向/刹车)
+function presetOptions(sel) {
+  return state.presets.map((p,i) => `<option value="${i}" ${i==sel?'selected':''}>${p.name}</option>`).join('');
+}
+function fillPresetSelects() {
+  $('#defaultPreset').innerHTML = presetOptions(state.defaultPreset);
+}
+
+// 读取某一行当前输入(含未保存编辑)
+function readRow(i) {
+  const q = k => $(`#presetBody [data-i="${i}"][data-k="${k}"]`);
+  const c = hex2rgb(q('color').value);
+  return { name:q('name').value, effect:+q('effect').value, r:c.r, g:c.g, b:c.b,
+           speed:+q('speed').value, brightness:+q('bright').value };
 }
 
 function load(s) {
   state = s;
   $('#status').textContent = (s.wifi.ap ? 'AP配网 ' : 'WiFi ') + s.wifi.ip;
-  fillEffects($('#fx'), s.effects);
-  // 系统
+  // 装饰灯
   $('#ledPin').value = s.led.pin;
   $('#ledCount').value = s.led.count;
-  $('#ledBright').value = s.led.brightness;
+  $('#rotate').checked = s.rotateOnBoot;
+  // 系统
   $('#ssid').value = s.wifi.ssid || '';
   $('#apSsid').value = s.wifi.apSsid || '';
   $('#apFallback').checked = s.wifi.apFallback;
-  // 预设
-  $('#rotate').checked = s.rotateOnBoot;
+  // 预设表 (内部会填充各"默认预设"下拉)
   renderPresets();
-  // RC
+  // 转向
   const rc = s.rc;
-  $('#rcEnabled').checked = rc.enabled;
-  $('#rcBrakePin').value = rc.brakePin;
-  $('#rcCenter').value = rc.centerUs;
-  $('#rcBrake').value = rc.brakeUs;
+  $('#rcTurnEnabled').checked = rc.turnEnabled;
+  $('#rcTurnReverse').checked = rc.turnReverse;
+  $('#rcTurnLedPin').value = rc.turnLedPin;
+  $('#rcTurnMode').value = rc.turnMode;
+  $('#rcTurnHold').value = rc.turnHoldMs;
   $('#rcLeftPin').value = rc.leftPin;
   $('#rcRightPin').value = rc.rightPin;
   $('#rcTurnTrig').value = rc.turnTriggerUs;
-  $('#rcTurnHold').value = rc.turnHoldMs;
-  $('#rcInvert').checked = rc.invert;
+  // 刹车
+  $('#rcBrakeEnabled').checked = rc.brakeEnabled;
+  $('#rcBrakeReverse').checked = rc.brakeReverse;
+  $('#rcBrakeLedPin').value = rc.brakeLedPin;
+  $('#rcBrakePin').value = rc.brakePin;
+  $('#rcCenter').value = rc.centerUs;
+  $('#rcBrake').value = rc.brakeUs;
 }
 
 async function refresh(){ load(await api('/api/state')); }
 
-// 实时预览
-function livePreset() {
-  const c = hex2rgb($('#color').value);
-  return { effect:+$('#fx').value, r:c.r, g:c.g, b:c.b,
-           speed:+$('#speed').value, brightness:+$('#bright').value };
-}
-$('#apply').onclick = () => api('/api/apply', livePreset());
-$('#speed').oninput = $('#bright').oninput = $('#fx').onchange = $('#color').oninput =
-  () => api('/api/apply', livePreset());
-
-$('#saveAsPreset').onclick = async () => {
-  if (state.presets.length >= state.maxPresets) return alert('预设已满');
-  const p = livePreset(); p.name = state.effects[p.effect];
-  state.presets.push(p); renderPresets();
-  $$('.tab')[1].click();
-};
-
-// 收集预设列表(含行内编辑)
+// 收集预设列表(只读已填充的行, 空槽跳过; 含速度/亮度)
 function collectPresets() {
-  $('#presetList li').length;
-  $$('#presetList li').forEach((li,i) => {
-    const name = li.querySelector('[data-k=name]').value;
-    const effect = +li.querySelector('[data-k=effect]').value;
-    const c = hex2rgb(li.querySelector('[data-k=color]').value);
-    Object.assign(state.presets[i], { name, effect, r:c.r, g:c.g, b:c.b });
+  $$('#presetBody tr.filled').forEach(tr => {
+    const i = +tr.querySelector('[data-k=name]').dataset.i;
+    Object.assign(state.presets[i], readRow(i));
   });
   return state.presets;
 }
@@ -103,27 +120,32 @@ $('#savePresets').onclick = async () => {
   load(await api('/api/presets', { presets }));
   alert('已保存');
 };
-$('#rotate').onchange = () => api('/api/rotate',
-  { rotateOnBoot:$('#rotate').checked, defaultPreset:+$('#defaultPreset').value });
-$('#defaultPreset').onchange = () => api('/api/rotate',
-  { rotateOnBoot:$('#rotate').checked, defaultPreset:+$('#defaultPreset').value });
-
-// RC
-$('#saveRc').onclick = async () => {
-  load(await api('/api/rc', {
-    enabled:$('#rcEnabled').checked, invert:$('#rcInvert').checked,
-    brakePin:+$('#rcBrakePin').value, centerUs:+$('#rcCenter').value,
-    brakeUs:+$('#rcBrake').value, leftPin:+$('#rcLeftPin').value,
-    rightPin:+$('#rcRightPin').value, turnTriggerUs:+$('#rcTurnTrig').value,
-    turnHoldMs:+$('#rcTurnHold').value }));
-  alert('已保存');
+// 装饰灯 (轮换/默认预设 + 数据脚/数量; 后者触发重启)
+$('#saveDeco').onclick = async () => {
+  await api('/api/rotate', { rotateOnBoot:$('#rotate').checked, defaultPreset:+$('#defaultPreset').value });
+  await api('/api/led', { pin:+$('#ledPin').value, count:+$('#ledCount').value });
+  alert('已保存, 设备重启生效中…');
 };
 
-// 系统
-$('#saveLed').onclick = async () => {
-  load(await api('/api/led', { pin:+$('#ledPin').value,
-    count:+$('#ledCount').value, brightness:+$('#ledBright').value }));
-  alert('已保存');
+// 转向 (保存后设备重启重建灯带)
+$('#saveTurn').onclick = async () => {
+  await api('/api/rc', {
+    turnEnabled:$('#rcTurnEnabled').checked, turnReverse:$('#rcTurnReverse').checked,
+    turnLedPin:+$('#rcTurnLedPin').value,
+    turnMode:+$('#rcTurnMode').value, leftPin:+$('#rcLeftPin').value,
+    rightPin:+$('#rcRightPin').value, turnTriggerUs:+$('#rcTurnTrig').value,
+    turnHoldMs:+$('#rcTurnHold').value });
+  alert('已保存, 设备重启生效中…');
+};
+
+// 刹车 (保存后设备重启重建灯带)
+$('#saveBrake').onclick = async () => {
+  await api('/api/rc', {
+    brakeEnabled:$('#rcBrakeEnabled').checked, brakeReverse:$('#rcBrakeReverse').checked,
+    brakeLedPin:+$('#rcBrakeLedPin').value,
+    brakePin:+$('#rcBrakePin').value, centerUs:+$('#rcCenter').value,
+    brakeUs:+$('#rcBrake').value });
+  alert('已保存, 设备重启生效中…');
 };
 $('#saveAp').onclick = async () => {
   load(await api('/api/ap', { apSsid:$('#apSsid').value, apFallback:$('#apFallback').checked }));
@@ -134,8 +156,12 @@ $('#saveWifi').onclick = async () => {
   await api('/api/wifi', { ssid:$('#ssid').value, pass:$('#pass').value });
   alert('已保存, 设备重启中…');
 };
-$('#reboot').onclick = () => confirm('重启?') && api('/api/reboot');
-$('#factory').onclick = () => confirm('恢复出厂并清除所有设置?') && api('/api/factory');
+$('#reboot').onclick = () => {
+  if (confirm('重启?')) { fetch('/api/reboot', {method:'POST'}); alert('设备重启中…'); }
+};
+$('#factory').onclick = () => {
+  if (confirm('恢复出厂并清除所有设置?')) { fetch('/api/factory', {method:'POST'}); alert('恢复出厂中, 设备将开 AP…'); }
+};
 
 // OTA
 $('#otaBtn').onclick = () => {

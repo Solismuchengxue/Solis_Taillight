@@ -14,61 +14,69 @@
 
 <nav>
   <button class="tab active" data-tab="live">灯效</button>
-  <button class="tab" data-tab="presets">预设</button>
-  <button class="tab" data-tab="rc">转向/刹车</button>
+  <button class="tab" data-tab="rc">配置</button>
   <button class="tab" data-tab="sys">系统</button>
 </nav>
 
-<!-- 实时灯效 -->
+<!-- 灯效 + 预设 (合并为表格) -->
 <section id="live" class="panel active">
-  <label>灯效
-    <select id="fx"></select>
-  </label>
-  <label>颜色 <input type="color" id="color" value="#ff0000"></label>
-  <label>速度 <input type="range" id="speed" min="0" max="255" value="128"></label>
-  <label>亮度 <input type="range" id="bright" min="0" max="255" value="200"></label>
-  <button id="apply" class="primary">实时预览</button>
-  <p class="hint">预览不保存。要长期使用请「保存为预设」。</p>
-  <button id="saveAsPreset">保存为预设</button>
-</section>
-
-<!-- 预设管理 -->
-<section id="presets" class="panel">
-  <label class="row"><input type="checkbox" id="rotate"> 上电轮换灯效</label>
-  <label>不轮换时默认预设
-    <select id="defaultPreset"></select>
-  </label>
-  <ul id="presetList"></ul>
+  <fieldset>
+    <legend>预设 (最多 5 个)</legend>
+  <div class="tablewrap">
+    <table id="presetTable">
+      <thead><tr>
+        <th>名称</th><th>灯效</th><th>颜色</th><th>速度<br>(0-255)</th><th>亮度<br>(0-255)</th><th>预览</th><th></th>
+      </tr></thead>
+      <tbody id="presetBody"></tbody>
+    </table>
+  </div>
+  <p class="hint">改完点该行「预览」下发到灯条(不保存)；点「保存预设列表」才写入设备。空行点＋添加(最多5个)。</p>
   <button id="savePresets" class="primary">保存预设列表</button>
+  </fieldset>
 </section>
 
-<!-- RC 转向/刹车 -->
+<!-- 配置 -->
 <section id="rc" class="panel">
-  <label class="row"><input type="checkbox" id="rcEnabled"> 启用转向/刹车联动</label>
+  <!-- 装饰灯 -->
+  <fieldset class="grid2">
+    <legend>装饰灯</legend>
+    <label>灯条数据脚 GPIO <input type="number" id="ledPin" min="0" max="21"></label>
+    <label>默认预设 <select id="defaultPreset"></select></label>
+    <label class="row"><input type="checkbox" id="rotate"> 上电轮换灯效</label>
+    <label>灯珠数量 <input type="number" id="ledCount" min="1" max="300"></label>
+    <button id="saveDeco" class="primary">保存装饰灯设置</button>
+  </fieldset>
 
-  <fieldset>
+  <!-- 转向 -->
+  <fieldset class="grid2">
+    <legend>转向 (两独立通道)</legend>
+    <label class="row full"><input type="checkbox" id="rcTurnEnabled"> 启用转向</label>
+    <label>灯条数据脚 GPIO <input type="number" id="rcTurnLedPin" min="0" max="21"></label>
+    <label>触发模式 <select id="rcTurnMode">
+      <option value="0">点动 (按一下亮几秒)</option>
+      <option value="1">两点 (接通就亮, 断开就灭)</option>
+    </select></label>
+    <label>左转脚 GPIO <input type="number" id="rcLeftPin" min="0" max="21"></label>
+    <label>右转脚 GPIO <input type="number" id="rcRightPin" min="0" max="21"></label>
+    <label>触发阈值 (us) <input type="number" id="rcTurnTrig"></label>
+    <label>保持时长 (ms) <input type="number" id="rcTurnHold"></label>
+    <label class="row full"><input type="checkbox" id="rcTurnReverse"> 灯效反向 (翻转流水方向)</label>
+    <p class="hint">转向灯固定为<b>琥珀色流水</b>(交通标准)。灯带装反或流水方向不对就勾「灯效反向」。点动: 脉宽高过阈值算「按下」, 按一下流水「保持时长」后自停; 两点: 高电平流水、低电平灭。</p>
+    <button id="saveTurn" class="primary">保存转向设置</button>
+  </fieldset>
+
+  <!-- 刹车 -->
+  <fieldset class="grid2">
     <legend>刹车 (复用油门通道, 实时)</legend>
-    <div class="grid">
-      <label>油门脚 GPIO <input type="number" id="rcBrakePin" min="0" max="21"></label>
-      <label>中位(us) <input type="number" id="rcCenter"></label>
-      <label>刹车阈值(us) <input type="number" id="rcBrake"></label>
-    </div>
-    <p class="hint">油门脉宽低于「中位 − 刹车阈值」时亮刹车灯(满红)。</p>
+    <label class="row full"><input type="checkbox" id="rcBrakeEnabled"> 启用刹车</label>
+    <label>灯条数据脚 GPIO <input type="number" id="rcBrakeLedPin" min="0" max="21"></label>
+    <label>油门脚 GPIO <input type="number" id="rcBrakePin" min="0" max="21"></label>
+    <label>中位 (us) <input type="number" id="rcCenter"></label>
+    <label>刹车阈值 (us) <input type="number" id="rcBrake"></label>
+    <label class="row full"><input type="checkbox" id="rcBrakeReverse"> 刹车方向反向 (杆量高于中位判刹车)</label>
+    <p class="hint">刹车灯固定为<b>红色常亮</b>(交通标准)。默认油门<b>低于</b>「中位 − 阈值」点亮; 若你的杆量1000是前进, 勾选「方向反向」改成<b>高于</b>「中位 + 阈值」点亮。改数据脚/启用后设备会重启重建灯带。</p>
+    <button id="saveBrake" class="primary">保存刹车设置</button>
   </fieldset>
-
-  <fieldset>
-    <legend>转向 (两独立通道, 点动触发)</legend>
-    <div class="grid">
-      <label>左转脚 GPIO <input type="number" id="rcLeftPin" min="0" max="21"></label>
-      <label>右转脚 GPIO <input type="number" id="rcRightPin" min="0" max="21"></label>
-      <label>触发阈值(us) <input type="number" id="rcTurnTrig"></label>
-      <label>保持时长(ms) <input type="number" id="rcTurnHold"></label>
-    </div>
-    <p class="hint">通道脉宽高于触发阈值视为「按下」；按一下, 转向灯效保持设定时长(默认3000ms)后自动停。</p>
-  </fieldset>
-
-  <label class="row"><input type="checkbox" id="rcInvert"> 信号反相 (直连请不要勾)</label>
-  <button id="saveRc" class="primary">保存 RC 设置</button>
 
   <fieldset>
     <legend>实时脉宽监视 (标定用)</legend>
@@ -80,13 +88,6 @@
 
 <!-- 系统 -->
 <section id="sys" class="panel">
-  <fieldset>
-    <legend>灯条</legend>
-    <label>数据脚 GPIO <input type="number" id="ledPin" min="0" max="21"></label>
-    <label>灯珠数量 <input type="number" id="ledCount" min="1" max="300"></label>
-    <label>总亮度上限 <input type="range" id="ledBright" min="0" max="255"></label>
-    <button id="saveLed" class="primary">保存灯条设置</button>
-  </fieldset>
   <fieldset>
     <legend>AP 配网热点</legend>
     <label>热点名称 (SSID) <input type="text" id="apSsid"></label>
