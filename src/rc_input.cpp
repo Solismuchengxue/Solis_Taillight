@@ -20,6 +20,13 @@ static bool     hazardLatch = false;
 static uint32_t lastLeftTap = 0, lastRightTap = 0;   // 双击检测
 #define HZ_DTAP_MS 400
 
+// 抗电机噪声: 逻辑状态去抖 (候选状态需连续保持 RC_DEBOUNCE_MS 才生效,
+// 滤掉电机开关产生的短毛刺误触发; 40ms≈2个50Hz脉冲周期, 真实操作几乎无感)
+#define RC_DEBOUNCE_MS 40
+static bool     brakeCand = false, leftCand = false, rightCand = false;   // 候选(原始)状态
+static bool     brakeDeb  = false, leftDeb  = false, rightDeb  = false;   // 去抖后的稳定状态
+static uint32_t brakeSince = 0, leftSince = 0, rightSince = 0;            // 候选状态起始时刻
+
 // 通用边沿处理: activeHigh=false 表示信号反相(脉冲为低电平期)
 static inline void IRAM_ATTR edge(Channel& ch, uint8_t pin, bool activeHigh) {
   bool level = digitalRead(pin);
@@ -50,6 +57,9 @@ void RcInput::begin() {
   prevLeft = prevRight = prevBoth = false;
   leftUntil = rightUntil = lastLeftTap = lastRightTap = 0;
   hazardLatch = false;
+  brakeCand = leftCand = rightCand = false;
+  brakeDeb  = leftDeb  = rightDeb  = false;
+  brakeSince = leftSince = rightSince = 0;
 
   if (!cfg.rc.brakeEnabled && !cfg.rc.left.enabled && !cfg.rc.right.enabled) {
     stState = "off"; return;
@@ -95,14 +105,23 @@ void RcInput::loop() {
   bool brakeActive = false;
   if (rc.brakeEnabled) {
     int bW = brakePulse();
-    if (bW) brakeActive = rc.brakeReverse ? (bW > (int)rc.centerUs + (int)rc.brakeUs)
-                                          : (bW < (int)rc.centerUs - (int)rc.brakeUs);
+    bool cand = bW && (rc.brakeReverse ? (bW > (int)rc.centerUs + (int)rc.brakeUs)
+                                       : (bW < (int)rc.centerUs - (int)rc.brakeUs));
+    if (cand != brakeCand) { brakeCand = cand; brakeSince = now; }   // 候选变化→重新计时
+    if (now - brakeSince >= RC_DEBOUNCE_MS) brakeDeb = brakeCand;    // 持续够久才生效
+    brakeActive = brakeDeb;
     LedEngine::setBrake(brakeActive);
   }
 
-  // 左/右转向: 仅点动
-  bool lPressed = rc.left.enabled  && leftPulse()  && leftPulse()  > rc.left.triggerUs;
-  bool rPressed = rc.right.enabled && rightPulse() && rightPulse() > rc.right.triggerUs;
+  // 左/右转向: 仅点动 (按下状态先去抖, 再喂给点动/双闪逻辑)
+  bool lRaw = rc.left.enabled  && leftPulse()  && leftPulse()  > rc.left.triggerUs;
+  bool rRaw = rc.right.enabled && rightPulse() && rightPulse() > rc.right.triggerUs;
+  if (lRaw != leftCand)  { leftCand  = lRaw; leftSince  = now; }
+  if (rRaw != rightCand) { rightCand = rRaw; rightSince = now; }
+  if (now - leftSince  >= RC_DEBOUNCE_MS) leftDeb  = leftCand;
+  if (now - rightSince >= RC_DEBOUNCE_MS) rightDeb = rightCand;
+  bool lPressed = leftDeb;
+  bool rPressed = rightDeb;
   bool lRise = lPressed && !prevLeft;
   bool rRise = rPressed && !prevRight;
   bool bothNow = lPressed && rPressed;
