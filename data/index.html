@@ -8,30 +8,57 @@
 </head>
 <body>
 <header>
-  <h1>Solis 尾灯</h1>
-  <span id="status" class="pill">…</span>
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-label="Solis">
+      <defs>
+        <radialGradient id="sung" cx="50%" cy="42%" r="58%">
+          <stop offset="0%" stop-color="#ffd76a"/>
+          <stop offset="100%" stop-color="#ff7a1a"/>
+        </radialGradient>
+      </defs>
+      <g stroke="#ffb02e" stroke-width="2.4" stroke-linecap="round">
+        <line x1="24" y1="2"  x2="24" y2="7"/>
+        <line x1="11" y1="6"  x2="14" y2="10"/>
+        <line x1="37" y1="6"  x2="34" y2="10"/>
+        <line x1="3"  y1="17" x2="9"  y2="18"/>
+        <line x1="45" y1="17" x2="39" y2="18"/>
+      </g>
+      <circle cx="24" cy="18" r="8" fill="url(#sung)"/>
+      <rect x="5" y="30" width="38" height="13" rx="6.5" fill="#23262e" stroke="#3a3f48"/>
+      <circle cx="14" cy="36.5" r="3" fill="#ff4d4d"/>
+      <circle cx="24" cy="36.5" r="3" fill="#ff9e2c"/>
+      <circle cx="34" cy="36.5" r="3" fill="#3ddc84"/>
+    </svg>
+    <h1 data-i18n="appTitle">Solis 尾灯</h1>
+  </div>
+  <div class="hdr-right">
+    <button id="langBtn" class="langbtn">EN</button>
+    <span id="status" class="pill">…</span>
+  </div>
 </header>
 
 <nav>
-  <button class="tab active" data-tab="live">灯效</button>
-  <button class="tab" data-tab="rc">配置</button>
-  <button class="tab" data-tab="sys">系统</button>
+  <button class="tab active" data-tab="live" data-i18n="tabLive">灯效</button>
+  <button class="tab" data-tab="rc" data-i18n="tabConfig">配置</button>
+  <button class="tab" data-tab="sys" data-i18n="tabSys">系统</button>
 </nav>
 
-<!-- 灯效 + 预设 (合并为表格) -->
+<!-- 灯效 + 预设 -->
 <section id="live" class="panel active">
   <fieldset>
-    <legend>预设 (最多 5 个)</legend>
-  <div class="tablewrap">
-    <table id="presetTable">
-      <thead><tr>
-        <th>名称</th><th>灯效</th><th>颜色</th><th>速度<br>(0-255)</th><th>亮度<br>(0-255)</th><th>预览</th><th></th>
-      </tr></thead>
-      <tbody id="presetBody"></tbody>
-    </table>
-  </div>
-  <p class="hint">改完点该行「预览」下发到灯条(不保存)；点「保存预设列表」才写入设备。空行点＋添加(最多5个)。</p>
-  <button id="savePresets" class="primary">保存预设列表</button>
+    <legend data-i18n="presetLegend">预设 (最多 5 个)</legend>
+    <div class="tablewrap">
+      <table id="presetTable">
+        <thead><tr>
+          <th data-i18n="thName">名称</th><th data-i18n="thEffect">灯效</th>
+          <th data-i18n="thColor">颜色</th><th data-i18n="thSpeed">速度<br>(0-255)</th>
+          <th data-i18n="thBright">亮度<br>(0-255)</th><th data-i18n="thPreview">预览</th><th></th>
+        </tr></thead>
+        <tbody id="presetBody"></tbody>
+      </table>
+    </div>
+    <p class="hint" data-i18n="presetHint">改完点该行「预览」下发到灯条(不保存)；点「保存预设列表」才写入设备。空行点＋添加(最多5个)。</p>
+    <button id="savePresets" class="primary" data-i18n="savePresets">保存预设列表</button>
   </fieldset>
 </section>
 
@@ -39,95 +66,95 @@
 <section id="rc" class="panel">
   <!-- 装饰灯 -->
   <fieldset class="grid2">
-    <legend>装饰灯</legend>
-    <label>灯条数据脚 GPIO <input type="number" id="ledPin" min="0" max="21"></label>
-    <label>灯珠数量 <input type="number" id="ledCount" min="1" max="300"></label>
-    <label>默认预设 <select id="defaultPreset"></select></label>
-    <label class="row"><input type="checkbox" id="rotate"> 上电轮换灯效</label>
+    <legend data-i18n="decoLegend">装饰灯</legend>
+    <label><span data-i18n="ledDataPin">灯条数据脚 GPIO</span> <input type="number" id="ledPin" min="0" max="21"></label>
+    <label><span data-i18n="ledCount">灯珠数量</span> <input type="number" id="ledCount" min="1" max="300"></label>
+    <label><span data-i18n="defaultPreset">默认预设</span> <select id="defaultPreset"></select></label>
+    <label class="row"><input type="checkbox" id="rotate"> <span data-i18n="rotateOnBoot">上电轮换灯效</span></label>
   </fieldset>
 
-  <!-- 转向: 左/右各自独立, 左右并排 -->
+  <!-- 转向: 左/右各自独立, 并排 -->
   <div class="cardrow">
     <fieldset>
-      <legend>左转</legend>
-      <label class="row"><input type="checkbox" id="rcLEn"> 启用左转</label>
-      <label>灯条数据脚 GPIO <input type="number" id="rcLLedPin" min="0" max="21"></label>
-      <label>灯珠数量 <input type="number" id="rcLCount" min="1" max="300"></label>
-      <label>触发脚 GPIO <input type="number" id="rcLChan" min="0" max="21"></label>
-      <label>触发模式 <select id="rcLMode">
-        <option value="0">点动</option>
-        <option value="1">两点</option>
+      <legend data-i18n="leftLegend">左转</legend>
+      <label class="row"><input type="checkbox" id="rcLEn"> <span data-i18n="enableLeft">启用左转</span></label>
+      <label><span data-i18n="ledDataPin">灯条数据脚 GPIO</span> <input type="number" id="rcLLedPin" min="0" max="21"></label>
+      <label><span data-i18n="ledCount">灯珠数量</span> <input type="number" id="rcLCount" min="1" max="300"></label>
+      <label><span data-i18n="triggerPin">触发脚 GPIO</span> <input type="number" id="rcLChan" min="0" max="21"></label>
+      <label><span data-i18n="triggerMode">触发模式</span> <select id="rcLMode">
+        <option value="0" data-i18n="modeMomentary">点动</option>
+        <option value="1" data-i18n="modeMaintained">两点</option>
       </select></label>
-      <label>保持时长 (ms) <input type="number" id="rcLHold"></label>
-      <label>触发阈值 (us) <input type="number" id="rcLTrig"></label>
-      <label class="row"><input type="checkbox" id="rcLReverse"> 灯效反向</label>
+      <label><span data-i18n="holdMs">保持时长 (ms)</span> <input type="number" id="rcLHold"></label>
+      <label><span data-i18n="triggerUs">触发阈值 (us)</span> <input type="number" id="rcLTrig"></label>
+      <label class="row"><input type="checkbox" id="rcLReverse"> <span data-i18n="effectReverse">灯效反向</span></label>
     </fieldset>
     <fieldset>
-      <legend>右转</legend>
-      <label class="row"><input type="checkbox" id="rcREn"> 启用右转</label>
-      <label>灯条数据脚 GPIO <input type="number" id="rcRLedPin" min="0" max="21"></label>
-      <label>灯珠数量 <input type="number" id="rcRCount" min="1" max="300"></label>
-      <label>触发脚 GPIO <input type="number" id="rcRChan" min="0" max="21"></label>
-      <label>触发模式 <select id="rcRMode">
-        <option value="0">点动</option>
-        <option value="1">两点</option>
+      <legend data-i18n="rightLegend">右转</legend>
+      <label class="row"><input type="checkbox" id="rcREn"> <span data-i18n="enableRight">启用右转</span></label>
+      <label><span data-i18n="ledDataPin">灯条数据脚 GPIO</span> <input type="number" id="rcRLedPin" min="0" max="21"></label>
+      <label><span data-i18n="ledCount">灯珠数量</span> <input type="number" id="rcRCount" min="1" max="300"></label>
+      <label><span data-i18n="triggerPin">触发脚 GPIO</span> <input type="number" id="rcRChan" min="0" max="21"></label>
+      <label><span data-i18n="triggerMode">触发模式</span> <select id="rcRMode">
+        <option value="0" data-i18n="modeMomentary">点动</option>
+        <option value="1" data-i18n="modeMaintained">两点</option>
       </select></label>
-      <label>保持时长 (ms) <input type="number" id="rcRHold"></label>
-      <label>触发阈值 (us) <input type="number" id="rcRTrig"></label>
-      <label class="row"><input type="checkbox" id="rcRReverse"> 灯效反向</label>
+      <label><span data-i18n="holdMs">保持时长 (ms)</span> <input type="number" id="rcRHold"></label>
+      <label><span data-i18n="triggerUs">触发阈值 (us)</span> <input type="number" id="rcRTrig"></label>
+      <label class="row"><input type="checkbox" id="rcRReverse"> <span data-i18n="effectReverse">灯效反向</span></label>
     </fieldset>
   </div>
-  <p class="hint">转向固定为<b>琥珀色流水</b>(交通标准)。左右各自独立灯带/通道。点动: 按一下流水「保持时长」后自停; 两点: 接通持续流水、断开即灭。流水方向不对就勾「灯效反向」。改数据脚/启用后设备重启重建灯带。</p>
+  <p class="hint" data-i18n="turnHint">转向固定为<b>琥珀色流水</b>(交通标准)。左右各自独立灯带/通道。点动: 按一下流水「保持时长」后自停; 两点: 接通持续流水、断开即灭。流水方向不对就勾「灯效反向」。改数据脚/启用后设备重启重建灯带。</p>
 
   <!-- 刹车 -->
   <fieldset class="grid2">
-    <legend>刹车 (复用油门通道, 实时)</legend>
-    <label class="row full"><input type="checkbox" id="rcBrakeEnabled"> 启用刹车</label>
-    <label>灯条数据脚 GPIO <input type="number" id="rcBrakeLedPin" min="0" max="21"></label>
-    <label>灯珠数量 <input type="number" id="rcBrakeCount" min="1" max="300"></label>
-    <label>油门脚 GPIO <input type="number" id="rcBrakePin" min="0" max="21"></label>
-    <label>中位 (us) <input type="number" id="rcCenter"></label>
-    <label>刹车阈值 (us) <input type="number" id="rcBrake"></label>
-    <label class="row full"><input type="checkbox" id="rcBrakeReverse"> 刹车方向反向 (杆量高于中位判刹车)</label>
-    <p class="hint">刹车灯固定为<b>红色常亮</b>(交通标准)。默认油门<b>低于</b>「中位 − 阈值」点亮; 若你的杆量1000是前进, 勾选「方向反向」改成<b>高于</b>「中位 + 阈值」点亮。</p>
+    <legend data-i18n="brakeLegend">刹车 (复用油门通道, 实时)</legend>
+    <label class="row full"><input type="checkbox" id="rcBrakeEnabled"> <span data-i18n="enableBrake">启用刹车</span></label>
+    <label><span data-i18n="ledDataPin">灯条数据脚 GPIO</span> <input type="number" id="rcBrakeLedPin" min="0" max="21"></label>
+    <label><span data-i18n="ledCount">灯珠数量</span> <input type="number" id="rcBrakeCount" min="1" max="300"></label>
+    <label><span data-i18n="throttlePin">油门脚 GPIO</span> <input type="number" id="rcBrakePin" min="0" max="21"></label>
+    <label><span data-i18n="centerUs">中位 (us)</span> <input type="number" id="rcCenter"></label>
+    <label><span data-i18n="brakeUs">刹车阈值 (us)</span> <input type="number" id="rcBrake"></label>
+    <label class="row full"><input type="checkbox" id="rcBrakeReverse"> <span data-i18n="brakeReverse">刹车方向反向 (杆量高于中位判刹车)</span></label>
+    <p class="hint" data-i18n="brakeHint">刹车灯固定为<b>红色常亮</b>(交通标准)。默认油门<b>低于</b>「中位 − 阈值」点亮; 若你的杆量1000是前进, 勾选「方向反向」改成<b>高于</b>「中位 + 阈值」点亮。</p>
   </fieldset>
 
-  <button id="saveConfig" class="primary">保存配置 (重启生效)</button>
+  <button id="saveConfig" class="primary" data-i18n="saveConfig">保存配置 (重启生效)</button>
 
-  <!-- 实时脉宽监视 (页面最后) -->
+  <!-- 实时脉宽监视 (最后) -->
   <fieldset>
-    <legend>实时脉宽监视 (标定用)</legend>
-    <p>油门: <b id="liveBrake">—</b> &nbsp; 左: <b id="liveLeft">—</b> &nbsp; 右: <b id="liveRight">—</b> us</p>
-    <p>当前判定: <b id="liveState">—</b></p>
-    <p class="hint">拨动遥控器/按转向键, 看脉宽数值, 据此设上面各项阈值。</p>
+    <legend data-i18n="monitorLegend">实时脉宽监视 (标定用)</legend>
+    <p><span data-i18n="monThrottle">油门</span>: <b id="liveBrake">—</b> &nbsp; <span data-i18n="monLeft">左</span>: <b id="liveLeft">—</b> &nbsp; <span data-i18n="monRight">右</span>: <b id="liveRight">—</b> us</p>
+    <p><span data-i18n="monState">当前判定</span>: <b id="liveState">—</b></p>
+    <p class="hint" data-i18n="monitorHint">拨动遥控器/按转向键, 看脉宽数值, 据此设上面各项阈值。</p>
   </fieldset>
 </section>
 
 <!-- 系统 -->
 <section id="sys" class="panel">
   <fieldset>
-    <legend>AP 配网热点</legend>
-    <label>热点名称 (SSID) <input type="text" id="apSsid"></label>
-    <label class="row"><input type="checkbox" id="apFallback"> 找不到 WiFi 时打开 AP</label>
-    <p class="hint">未配过 WiFi 时始终会开 AP；此开关仅控制「已配 WiFi 但连不上」时是否回退。改名下次开 AP 生效。</p>
-    <button id="saveAp" class="primary">保存 AP 设置</button>
+    <legend data-i18n="apLegend">AP 配网热点</legend>
+    <label><span data-i18n="apSsidLabel">热点名称 (SSID)</span> <input type="text" id="apSsid"></label>
+    <label class="row"><input type="checkbox" id="apFallback"> <span data-i18n="apFallback">找不到 WiFi 时打开 AP</span></label>
+    <p class="hint" data-i18n="apHint">未配过 WiFi 时始终会开 AP；此开关仅控制「已配 WiFi 但连不上」时是否回退。改名下次开 AP 生效。</p>
+    <button id="saveAp" class="primary" data-i18n="saveAp">保存 AP 设置</button>
   </fieldset>
   <fieldset>
-    <legend>WiFi</legend>
-    <label>SSID <input type="text" id="ssid"></label>
-    <label>密码 <input type="password" id="pass"></label>
-    <button id="saveWifi" class="primary">保存并重启</button>
+    <legend data-i18n="wifiLegend">WiFi</legend>
+    <label><span data-i18n="ssidLabel">SSID</span> <input type="text" id="ssid"></label>
+    <label><span data-i18n="passLabel">密码</span> <input type="password" id="pass"></label>
+    <button id="saveWifi" class="primary" data-i18n="saveWifi">保存并重启</button>
   </fieldset>
   <fieldset>
-    <legend>固件 OTA</legend>
+    <legend data-i18n="otaLegend">固件 OTA</legend>
     <input type="file" id="fw" accept=".bin">
-    <button id="otaBtn">上传固件</button>
+    <button id="otaBtn" data-i18n="otaBtn">上传固件</button>
     <progress id="otaProg" value="0" max="100" hidden></progress>
   </fieldset>
   <fieldset>
-    <legend>维护</legend>
-    <button id="reboot">重启</button>
-    <button id="factory" class="danger">恢复出厂</button>
+    <legend data-i18n="maintLegend">维护</legend>
+    <button id="reboot" data-i18n="reboot">重启</button>
+    <button id="factory" class="danger" data-i18n="factory">恢复出厂</button>
   </fieldset>
 </section>
 
