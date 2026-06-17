@@ -34,25 +34,25 @@ static void setDefaults() {
   // RC 默认 (停用, 引脚预置为规划值; 直连不反相)
   cfg.rc.brakeEnabled  = false;
   cfg.rc.brakeReverse  = false;   // 默认油门低于中位判刹车
-  cfg.rc.brakePin      = 4;       // 油门通道(刹车)
+  cfg.rc.brakePin      = 5;       // 油门通道(刹车) GPIO5
   cfg.rc.centerUs      = 1500;
   cfg.rc.brakeUs       = 250;     // 油门低于 1250us 判刹车
   cfg.rc.brakeLedPin   = 3;       // 默认与装饰灯共用 GPIO3
   cfg.rc.brakeLedCount = 6;
   cfg.rc.brakePreset   = 0;
-  // 左转
+  // 左转 (触发 GPIO6, 灯带共用 GPIO3)
   cfg.rc.left.enabled    = false;
-  cfg.rc.left.channelPin = 5;
-  cfg.rc.left.ledPin     = 5;
+  cfg.rc.left.channelPin = 6;
+  cfg.rc.left.ledPin     = 3;
   cfg.rc.left.ledCount   = 6;
   cfg.rc.left.mode       = TURN_MOMENTARY;
   cfg.rc.left.triggerUs  = 1700;
   cfg.rc.left.holdMs     = 3000;
   cfg.rc.left.reverse    = false;
-  // 右转 (默认流水方向与左相反)
+  // 右转 (触发 GPIO7, 灯带共用 GPIO3; 默认流水方向与左相反)
   cfg.rc.right.enabled    = false;
-  cfg.rc.right.channelPin = 6;
-  cfg.rc.right.ledPin     = 6;
+  cfg.rc.right.channelPin = 7;
+  cfg.rc.right.ledPin     = 3;
   cfg.rc.right.ledCount   = 6;
   cfg.rc.right.mode       = TURN_MOMENTARY;
   cfg.rc.right.triggerUs  = 1700;
