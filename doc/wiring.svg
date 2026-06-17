@@ -1,0 +1,88 @@
+<svg viewBox="0 0 820 600" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, system-ui, sans-serif">
+  <rect width="820" height="600" fill="#fbfbfd"/>
+  <text x="410" y="30" text-anchor="middle" font-size="20" font-weight="600" fill="#1f2430">Solis 尾灯接线图</text>
+
+  <!-- 电源轨 -->
+  <line x1="110" y1="115" x2="800" y2="115" stroke="#e23b3b" stroke-width="3"/>
+  <text x="100" y="111" text-anchor="end" font-size="13" fill="#e23b3b" font-weight="600">+5V</text>
+  <line x1="40" y1="565" x2="800" y2="565" stroke="#333" stroke-width="3"/>
+  <text x="44" y="585" font-size="13" fill="#333" font-weight="600">GND 共地（电池/主板/ESP32/接收机/灯条）</text>
+
+  <!-- 锂电池 -->
+  <rect x="40" y="450" width="110" height="70" rx="6" fill="#eef1f5" stroke="#b7bfca"/>
+  <text x="95" y="490" text-anchor="middle" font-size="14" fill="#1f2430">锂电池</text>
+  <!-- LM2596HV -->
+  <rect x="175" y="445" width="120" height="80" rx="6" fill="#eef1f5" stroke="#b7bfca"/>
+  <text x="235" y="478" text-anchor="middle" font-size="14" fill="#1f2430">LM2596HV</text>
+  <text x="235" y="497" text-anchor="middle" font-size="12" fill="#5b6573">降压 5V (非隔离)</text>
+  <line x1="150" y1="472" x2="175" y2="472" stroke="#e23b3b" stroke-width="2"/>
+  <line x1="150" y1="500" x2="175" y2="500" stroke="#333" stroke-width="2"/>
+  <line x1="235" y1="445" x2="235" y2="115" stroke="#e23b3b" stroke-width="2"/>
+  <line x1="275" y1="525" x2="275" y2="565" stroke="#333" stroke-width="2"/>
+
+  <!-- WS2812 灯条 -->
+  <rect x="55" y="200" width="115" height="130" rx="6" fill="#eef1f5" stroke="#b7bfca"/>
+  <text x="112" y="250" text-anchor="middle" font-size="13" fill="#1f2430">WS2812B</text>
+  <text x="112" y="269" text-anchor="middle" font-size="13" fill="#1f2430">灯条 ×6</text>
+  <text x="112" y="300" text-anchor="middle" font-size="11" fill="#5b6573">装饰/转向/刹车</text>
+  <line x1="90" y1="200" x2="90" y2="115" stroke="#e23b3b" stroke-width="2"/>
+  <line x1="135" y1="330" x2="135" y2="565" stroke="#333" stroke-width="2"/>
+
+  <!-- ESP32-C3 -->
+  <rect x="320" y="175" width="170" height="220" rx="8" fill="#e7eefc" stroke="#2b7de9"/>
+  <text x="405" y="205" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2430">ESP32-C3</text>
+  <text x="405" y="223" text-anchor="middle" font-size="11" fill="#5b6573">SuperMini</text>
+  <line x1="345" y1="175" x2="345" y2="115" stroke="#e23b3b" stroke-width="2"/>
+  <text x="350" y="168" font-size="11" fill="#5b6573">5V</text>
+  <line x1="345" y1="395" x2="345" y2="565" stroke="#333" stroke-width="2"/>
+  <text x="350" y="412" font-size="11" fill="#5b6573">GND</text>
+
+  <!-- GPIO3 -> WS2812 DIN -->
+  <text x="328" y="265" font-size="11" fill="#2b7de9">GPIO3</text>
+  <line x1="320" y1="275" x2="170" y2="275" stroke="#2b7de9" stroke-width="2"/>
+  <text x="245" y="269" text-anchor="middle" font-size="11" fill="#2b7de9">DIN</text>
+
+  <!-- RC 接收机 -->
+  <rect x="640" y="175" width="150" height="220" rx="6" fill="#eef1f5" stroke="#b7bfca"/>
+  <text x="715" y="205" text-anchor="middle" font-size="14" fill="#1f2430">HOTRC F-06A</text>
+  <text x="715" y="223" text-anchor="middle" font-size="12" fill="#5b6573">接收机</text>
+  <line x1="715" y1="175" x2="715" y2="115" stroke="#e23b3b" stroke-width="2"/>
+  <text x="722" y="168" font-size="11" fill="#5b6573">VCC(单路5V)</text>
+  <line x1="675" y1="395" x2="675" y2="565" stroke="#333" stroke-width="2"/>
+  <text x="680" y="412" font-size="11" fill="#5b6573">GND</text>
+
+  <!-- RC 信号 -> 1k -> ESP32 GPIO5/6/7 -->
+  <g stroke="#f59e0b" stroke-width="2" fill="none">
+    <line x1="640" y1="250" x2="600" y2="250"/><line x1="545" y1="250" x2="490" y2="250"/>
+    <line x1="640" y1="295" x2="600" y2="295"/><line x1="545" y1="295" x2="490" y2="295"/>
+    <line x1="640" y1="340" x2="600" y2="340"/><line x1="545" y1="340" x2="490" y2="340"/>
+  </g>
+  <g fill="#fff" stroke="#f59e0b" stroke-width="1.5">
+    <rect x="545" y="241" width="55" height="18" rx="3"/>
+    <rect x="545" y="286" width="55" height="18" rx="3"/>
+    <rect x="545" y="331" width="55" height="18" rx="3"/>
+  </g>
+  <g font-size="11" fill="#a06000" text-anchor="middle">
+    <text x="572" y="254">1kΩ</text><text x="572" y="299">1kΩ</text><text x="572" y="344">1kΩ</text>
+  </g>
+  <g font-size="11" fill="#1f2430">
+    <text x="636" y="246" text-anchor="end">油门</text>
+    <text x="636" y="291" text-anchor="end">左转</text>
+    <text x="636" y="336" text-anchor="end">右转</text>
+  </g>
+  <g font-size="11" fill="#a06000" text-anchor="start">
+    <text x="494" y="246">GPIO5</text>
+    <text x="494" y="291">GPIO6</text>
+    <text x="494" y="336">GPIO7</text>
+  </g>
+
+  <!-- hoverboard 主板 -->
+  <rect x="615" y="445" width="175" height="70" rx="6" fill="#eef1f5" stroke="#b7bfca"/>
+  <text x="702" y="475" text-anchor="middle" font-size="13" fill="#1f2430">hoverboard 主板</text>
+  <text x="702" y="494" text-anchor="middle" font-size="12" fill="#5b6573">GD32 (电机控制)</text>
+  <line x1="715" y1="395" x2="715" y2="445" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="725" y="425" font-size="11" fill="#a06000">舵机信号并联</text>
+  <line x1="660" y1="515" x2="660" y2="565" stroke="#333" stroke-width="2"/>
+
+  <text x="410" y="540" text-anchor="middle" font-size="11" fill="#8a93a0">RC 信号峰值约3.5V(3.3V级)直连+串1kΩ保险 · 接收机VCC只接一路 · 所有GND共地</text>
+</svg>
