@@ -90,7 +90,7 @@ pio run -e ota -t upload     # 无线烧录固件 (设备在局域网; 需防火
 ## 工程结构
 
 ```
-Solis_ESP32C3LED/
+Solis_Taillight/
 ├─ platformio.ini       # 构建配置 (含 ota 无线烧录环境)
 ├─ src/
 │  ├─ main.cpp          # 启动编排 + 主循环 (含可选 secrets.h 种子)
