@@ -13,9 +13,10 @@ static Channel chBrake, chLeft, chRight;
 static int8_t  aBrake = -1, aLeft = -1, aRight = -1;   // 已 attach 的引脚
 static const char* stState = "off";
 
-// 转向点动一次性定时
-static bool     prevLeft = false, prevRight = false;
+// 转向点动一次性定时 + 双闪锁存
+static bool     prevLeft = false, prevRight = false, prevBoth = false;
 static uint32_t leftUntil = 0, rightUntil = 0;
+static bool     hazardLatch = false;
 
 // 通用边沿处理: activeHigh=false 表示信号反相(脉冲为低电平期)
 static inline void IRAM_ATTR edge(Channel& ch, uint8_t pin, bool activeHigh) {
@@ -44,8 +45,9 @@ void RcInput::begin() {
   if (aBrake >= 0) { detachInterrupt(aBrake); aBrake = -1; }
   if (aLeft  >= 0) { detachInterrupt(aLeft);  aLeft  = -1; }
   if (aRight >= 0) { detachInterrupt(aRight); aRight = -1; }
-  prevLeft = prevRight = false;
+  prevLeft = prevRight = prevBoth = false;
   leftUntil = rightUntil = 0;
+  hazardLatch = false;
 
   if (!cfg.rc.brakeEnabled && !cfg.rc.left.enabled && !cfg.rc.right.enabled) {
     stState = "off"; return;
@@ -82,21 +84,6 @@ bool RcInput::hasSignal() {
   return brakePulse() || leftPulse() || rightPulse();
 }
 
-// 一侧转向激活判定 (点动定时 / 两点保持)
-static bool turnActive(const TurnSide& t, uint16_t pulse, bool& prev,
-                       uint32_t& until, uint32_t now) {
-  bool pressed = pulse && pulse > t.triggerUs;
-  bool active;
-  if (t.mode == TURN_MAINTAINED) {
-    active = pressed;
-  } else {
-    if (pressed && !prev) until = now + t.holdMs;
-    active = (int32_t)(now - until) < 0;
-  }
-  prev = pressed;
-  return active;
-}
-
 void RcInput::loop() {
   const RcConfig& rc = cfg.rc;
   if (!rc.brakeEnabled && !rc.left.enabled && !rc.right.enabled) return;
@@ -111,15 +98,30 @@ void RcInput::loop() {
     LedEngine::setBrake(brakeActive);
   }
 
-  // 左/右转向各自独立判定
-  bool lActive = rc.left.enabled  && turnActive(rc.left,  leftPulse(),  prevLeft,  leftUntil,  now);
-  bool rActive = rc.right.enabled && turnActive(rc.right, rightPulse(), prevRight, rightUntil, now);
-  LedEngine::setTurn(lActive, rActive);
+  // 左/右转向: 仅点动。左右同时"按下"上升沿 → 切换双闪锁存
+  bool lPressed = rc.left.enabled  && leftPulse()  && leftPulse()  > rc.left.triggerUs;
+  bool rPressed = rc.right.enabled && rightPulse() && rightPulse() > rc.right.triggerUs;
+  bool bothNow  = lPressed && rPressed;
+  if (bothNow && !prevBoth) {              // 同时触发 → 双闪开/关
+    hazardLatch = !hazardLatch;
+    leftUntil = rightUntil = 0;            // 清掉单边定时
+  }
+  prevBoth = bothNow;
 
-  // 状态名(实时监视用); 显示优先级 刹车 > 转向
-  if      (brakeActive)        stState = "brake";
-  else if (lActive && rActive) stState = "hazard";
-  else if (lActive)            stState = "left";
-  else if (rActive)            stState = "right";
-  else                         stState = "none";
+  bool lActive = false, rActive = false;
+  if (!hazardLatch) {                      // 锁存双闪时忽略单边
+    if (lPressed && !prevLeft  && !rPressed) leftUntil  = now + rc.left.holdMs;
+    if (rPressed && !prevRight && !lPressed) rightUntil = now + rc.right.holdMs;
+    lActive = (int32_t)(now - leftUntil)  < 0;
+    rActive = (int32_t)(now - rightUntil) < 0;
+  }
+  prevLeft = lPressed; prevRight = rPressed;
+  LedEngine::setTurn(lActive, rActive, hazardLatch);
+
+  // 状态名(实时监视用); 显示优先级 刹车 > 双闪 > 转向
+  if      (brakeActive)  stState = "brake";
+  else if (hazardLatch)  stState = "hazard";
+  else if (lActive)      stState = "left";
+  else if (rActive)      stState = "right";
+  else                   stState = "none";
 }

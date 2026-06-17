@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Solis 尾灯控制台</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -81,10 +82,6 @@
       <label><span data-i18n="ledDataPin">灯条数据脚 GPIO</span> <input type="number" id="rcLLedPin" min="0" max="21"></label>
       <label><span data-i18n="ledCount">灯珠数量</span> <input type="number" id="rcLCount" min="1" max="300"></label>
       <label><span data-i18n="triggerPin">触发脚 GPIO</span> <input type="number" id="rcLChan" min="0" max="21"></label>
-      <label><span data-i18n="triggerMode">触发模式</span> <select id="rcLMode">
-        <option value="0" data-i18n="modeMomentary">点动</option>
-        <option value="1" data-i18n="modeMaintained">两点</option>
-      </select></label>
       <label><span data-i18n="holdMs">保持时长 (ms)</span> <input type="number" id="rcLHold"></label>
       <label><span data-i18n="triggerUs">触发阈值 (us)</span> <input type="number" id="rcLTrig"></label>
       <label class="row"><input type="checkbox" id="rcLReverse"> <span data-i18n="effectReverse">灯效反向</span></label>
@@ -95,10 +92,6 @@
       <label><span data-i18n="ledDataPin">灯条数据脚 GPIO</span> <input type="number" id="rcRLedPin" min="0" max="21"></label>
       <label><span data-i18n="ledCount">灯珠数量</span> <input type="number" id="rcRCount" min="1" max="300"></label>
       <label><span data-i18n="triggerPin">触发脚 GPIO</span> <input type="number" id="rcRChan" min="0" max="21"></label>
-      <label><span data-i18n="triggerMode">触发模式</span> <select id="rcRMode">
-        <option value="0" data-i18n="modeMomentary">点动</option>
-        <option value="1" data-i18n="modeMaintained">两点</option>
-      </select></label>
       <label><span data-i18n="holdMs">保持时长 (ms)</span> <input type="number" id="rcRHold"></label>
       <label><span data-i18n="triggerUs">触发阈值 (us)</span> <input type="number" id="rcRTrig"></label>
       <label class="row"><input type="checkbox" id="rcRReverse"> <span data-i18n="effectReverse">灯效反向</span></label>

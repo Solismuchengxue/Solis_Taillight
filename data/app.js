@@ -24,7 +24,7 @@ const I18N = {
     leftLegend:"左转", rightLegend:"右转", enableLeft:"启用左转", enableRight:"启用右转",
     triggerPin:"触发脚 GPIO", triggerMode:"触发模式", modeMomentary:"点动", modeMaintained:"两点",
     holdMs:"保持时长 (ms)", triggerUs:"触发阈值 (us)", effectReverse:"灯效反向",
-    turnHint:"转向固定为<b>琥珀色流水</b>(交通标准)。左右各自独立灯带/通道。点动: 按一下流水「保持时长」后自停; 两点: 接通持续流水、断开即灭。流水方向不对就勾「灯效反向」。改数据脚/启用后设备重启重建灯带。",
+    turnHint:"转向固定为<b>琥珀色流水</b>(交通标准, 仅点动)。左右各自独立灯带/通道, 按一下流水「保持时长」后自停。左右<b>同时触发=双闪并锁存</b>, 再次同时触发才取消。流水方向不对就勾「灯效反向」。改数据脚/启用后设备重启重建灯带。",
     brakeLegend:"刹车 (复用油门通道, 实时)", enableBrake:"启用刹车", throttlePin:"油门脚 GPIO",
     centerUs:"中位 (us)", brakeUs:"刹车阈值 (us)", brakeReverse:"刹车方向反向 (杆量高于中位判刹车)",
     brakeHint:"刹车灯固定为<b>红色常亮</b>(交通标准)。默认油门<b>低于</b>「中位 − 阈值」点亮; 若你的杆量1000是前进, 勾选「方向反向」改成<b>高于</b>「中位 + 阈值」点亮。",
@@ -53,7 +53,7 @@ const I18N = {
     leftLegend:"Left turn", rightLegend:"Right turn", enableLeft:"Enable left", enableRight:"Enable right",
     triggerPin:"Trigger GPIO", triggerMode:"Trigger mode", modeMomentary:"Momentary", modeMaintained:"Maintained",
     holdMs:"Hold (ms)", triggerUs:"Threshold (us)", effectReverse:"Reverse direction",
-    turnHint:"Turn is fixed <b>amber flow</b> (traffic standard). Left/right use independent strips & channels. Momentary: one tap flows for Hold then stops; Maintained: flows while high, off while low. Tick Reverse if the flow goes the wrong way. Changing data pin/enable reboots to rebuild strips.",
+    turnHint:"Turn is fixed <b>amber flow</b> (traffic standard, momentary only). Left/right use independent strips & channels; one tap flows for Hold then stops. Pressing both together toggles <b>latched hazard</b> (press both again to cancel). Tick Reverse if the flow goes the wrong way. Changing data pin/enable reboots to rebuild strips.",
     brakeLegend:"Brake (throttle channel, realtime)", enableBrake:"Enable brake", throttlePin:"Throttle GPIO",
     centerUs:"Center (us)", brakeUs:"Brake threshold (us)", brakeReverse:"Reverse brake dir (brake = above center)",
     brakeHint:"Brake is fixed <b>solid red</b> (traffic standard). Lit when throttle is <b>below</b> Center − threshold; if your stick 1000 means forward, tick Reverse to light when <b>above</b> Center + threshold.",
@@ -165,11 +165,11 @@ function load(s) {
   const rc = s.rc, L = rc.left, R = rc.right;
   $('#rcLEn').checked = L.enabled;   $('#rcLLedPin').value = L.ledPin;
   $('#rcLCount').value = L.ledCount; $('#rcLChan').value = L.channelPin;
-  $('#rcLMode').value = L.mode;      $('#rcLHold').value = L.holdMs;
+  $('#rcLHold').value = L.holdMs;
   $('#rcLTrig').value = L.triggerUs; $('#rcLReverse').checked = L.reverse;
   $('#rcREn').checked = R.enabled;   $('#rcRLedPin').value = R.ledPin;
   $('#rcRCount').value = R.ledCount; $('#rcRChan').value = R.channelPin;
-  $('#rcRMode').value = R.mode;      $('#rcRHold').value = R.holdMs;
+  $('#rcRHold').value = R.holdMs;
   $('#rcRTrig').value = R.triggerUs; $('#rcRReverse').checked = R.reverse;
   // 刹车
   $('#rcBrakeEnabled').checked = rc.brakeEnabled;
@@ -205,10 +205,10 @@ $('#saveConfig').onclick = async () => {
     brakeLedPin:+$('#rcBrakeLedPin').value, brakeLedCount:+$('#rcBrakeCount').value,
     brakePin:+$('#rcBrakePin').value, centerUs:+$('#rcCenter').value, brakeUs:+$('#rcBrake').value,
     left:{ enabled:$('#rcLEn').checked, ledPin:+$('#rcLLedPin').value, ledCount:+$('#rcLCount').value,
-           channelPin:+$('#rcLChan').value, mode:+$('#rcLMode').value, holdMs:+$('#rcLHold').value,
+           channelPin:+$('#rcLChan').value, holdMs:+$('#rcLHold').value,
            triggerUs:+$('#rcLTrig').value, reverse:$('#rcLReverse').checked },
     right:{ enabled:$('#rcREn').checked, ledPin:+$('#rcRLedPin').value, ledCount:+$('#rcRCount').value,
-            channelPin:+$('#rcRChan').value, mode:+$('#rcRMode').value, holdMs:+$('#rcRHold').value,
+            channelPin:+$('#rcRChan').value, holdMs:+$('#rcRHold').value,
             triggerUs:+$('#rcRTrig').value, reverse:$('#rcRReverse').checked }
   });
   alert(t('alSavedReboot'));

@@ -10,7 +10,7 @@ static uint16_t stripCount[MAX_STRIPS];   // 每条灯带各自的灯珠数量
 static int      nStrips = 0;
 
 static Preset   decoPreset;          // 装饰灯当前预设
-static bool     brakeOn = false, turnLeft = false, turnRight = false;
+static bool     brakeOn = false, turnLeft = false, turnRight = false, turnHazard = false;
 
 // 运行期绑定数据脚 (FastLED 引脚是编译期模板, 用 switch 覆盖候选脚)
 static void addStrip(uint8_t pin, CRGB* buf) {
@@ -60,7 +60,9 @@ void LedEngine::begin() {
 
 void LedEngine::applyPreset(const Preset& p) { decoPreset = p; }
 void LedEngine::setBrake(bool on) { brakeOn = on; }
-void LedEngine::setTurn(bool left, bool right) { turnLeft = left; turnRight = right; }
+void LedEngine::setTurn(bool left, bool right, bool hazard) {
+  turnLeft = left; turnRight = right; turnHazard = hazard;
+}
 
 // 把某预设的灯效渲染进 buf (全亮度); 各灯效自身在 buf 上持续演化
 static void renderEffect(CRGB* buf, uint16_t n, const Preset& p) {
@@ -138,14 +140,17 @@ void LedEngine::loop() {
     uint8_t pin = stripPin[s];
     uint16_t cnt = stripCount[s];
     // 本数据脚上各功能是否激活
-    bool bk = brakeOn   && cfg.rc.brakeEnabled && cfg.rc.brakeLedPin   == pin;
-    bool lt = turnLeft  && cfg.rc.left.enabled  && cfg.rc.left.ledPin  == pin;
-    bool rt = turnRight && cfg.rc.right.enabled && cfg.rc.right.ledPin == pin;
-    // 优先级: 刹车 > 转向 > 装饰
+    bool onLeftStrip  = cfg.rc.left.enabled  && cfg.rc.left.ledPin  == pin;
+    bool onRightStrip = cfg.rc.right.enabled && cfg.rc.right.ledPin == pin;
+    bool bk = brakeOn && cfg.rc.brakeEnabled && cfg.rc.brakeLedPin == pin;
+    bool hz = turnHazard && (onLeftStrip || onRightStrip);
+    bool lt = turnLeft  && onLeftStrip;
+    bool rt = turnRight && onRightStrip;
+    // 优先级: 刹车 > 双闪 > 转向 > 装饰
     if (bk) {
       fill_solid(showBuf[s], cnt, CRGB::Red);                            // 刹车: 满红常亮
-    } else if (lt && rt) {
-      // 左右同脚同时激活(双闪): 整条琥珀闪烁
+    } else if (hz) {
+      // 双闪(锁存): 整条琥珀闪烁
       fill_solid(showBuf[s], cnt, ((millis() / 333) % 2 == 0) ? TRAFFIC_AMBER : CRGB::Black);
     } else if (lt || rt) {
       // 单向流水: 各自 reverse 决定方向
