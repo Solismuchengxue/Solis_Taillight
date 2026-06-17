@@ -68,6 +68,7 @@ static void buildState(JsonDocument& d) {
   rc["centerUs"]      = cfg.rc.centerUs;
   rc["brakeUs"]       = cfg.rc.brakeUs;
   rc["brakeLedPin"]   = cfg.rc.brakeLedPin;
+  rc["hazardMode"]    = cfg.rc.hazardMode;
 
   auto putTurn = [](JsonObject o, const TurnSide& t) {
     o["enabled"]    = t.enabled;
@@ -205,6 +206,7 @@ void Web::begin() {
       if (d["centerUs"].is<int>())        rc.centerUs = d["centerUs"];
       if (d["brakeUs"].is<int>())         rc.brakeUs = d["brakeUs"];
       if (d["brakeLedPin"].is<int>())     rc.brakeLedPin = d["brakeLedPin"];
+      if (d["hazardMode"].is<int>())      rc.hazardMode = d["hazardMode"];
 
       auto getTurn = [](JsonObject o, TurnSide& t) {
         if (o["enabled"].is<bool>())    t.enabled = o["enabled"];

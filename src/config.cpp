@@ -39,7 +39,7 @@ static void setDefaults() {
   cfg.rc.brakeUs       = 250;     // 油门低于 1250us 判刹车
   cfg.rc.brakeLedPin   = 3;       // 默认与装饰灯共用 GPIO3
   cfg.rc.brakeLedCount = 6;
-  cfg.rc.brakePreset   = 0;
+  cfg.rc.hazardMode    = 0;       // 默认: 左右同时触发双闪
   // 左转 (触发 GPIO6, 灯带共用 GPIO3)
   cfg.rc.left.enabled    = false;
   cfg.rc.left.channelPin = 6;

@@ -17,6 +17,8 @@ static const char* stState = "off";
 static bool     prevLeft = false, prevRight = false, prevBoth = false;
 static uint32_t leftUntil = 0, rightUntil = 0;
 static bool     hazardLatch = false;
+static uint32_t lastLeftTap = 0, lastRightTap = 0;   // 双击检测
+#define HZ_DTAP_MS 400
 
 // 通用边沿处理: activeHigh=false 表示信号反相(脉冲为低电平期)
 static inline void IRAM_ATTR edge(Channel& ch, uint8_t pin, bool activeHigh) {
@@ -46,7 +48,7 @@ void RcInput::begin() {
   if (aLeft  >= 0) { detachInterrupt(aLeft);  aLeft  = -1; }
   if (aRight >= 0) { detachInterrupt(aRight); aRight = -1; }
   prevLeft = prevRight = prevBoth = false;
-  leftUntil = rightUntil = 0;
+  leftUntil = rightUntil = lastLeftTap = lastRightTap = 0;
   hazardLatch = false;
 
   if (!cfg.rc.brakeEnabled && !cfg.rc.left.enabled && !cfg.rc.right.enabled) {
@@ -98,20 +100,31 @@ void RcInput::loop() {
     LedEngine::setBrake(brakeActive);
   }
 
-  // 左/右转向: 仅点动。左右同时"按下"上升沿 → 切换双闪锁存
+  // 左/右转向: 仅点动
   bool lPressed = rc.left.enabled  && leftPulse()  && leftPulse()  > rc.left.triggerUs;
   bool rPressed = rc.right.enabled && rightPulse() && rightPulse() > rc.right.triggerUs;
-  bool bothNow  = lPressed && rPressed;
-  if (bothNow && !prevBoth) {              // 同时触发 → 双闪开/关
-    hazardLatch = !hazardLatch;
-    leftUntil = rightUntil = 0;            // 清掉单边定时
+  bool lRise = lPressed && !prevLeft;
+  bool rRise = rPressed && !prevRight;
+  bool bothNow = lPressed && rPressed;
+
+  // 双闪触发 (锁存, 再次触发取消)
+  bool block = false;
+  if (rc.hazardMode == 0) {                          // 左右同时
+    if (bothNow && !prevBoth) { hazardLatch = !hazardLatch; leftUntil = rightUntil = 0; }
+    block = bothNow;                                 // 同时按下不算单边
+  } else if (rc.hazardMode == 1) {                   // 双击任意转向
+    if (lRise) { if (now - lastLeftTap  < HZ_DTAP_MS) { hazardLatch = !hazardLatch; leftUntil = rightUntil = 0; } lastLeftTap  = now; }
+    if (rRise) { if (now - lastRightTap < HZ_DTAP_MS) { hazardLatch = !hazardLatch; leftUntil = rightUntil = 0; } lastRightTap = now; }
+  } else {                                           // 关闭
+    hazardLatch = false;
   }
   prevBoth = bothNow;
 
+  // 单边点动 (锁存双闪时忽略)
   bool lActive = false, rActive = false;
-  if (!hazardLatch) {                      // 锁存双闪时忽略单边
-    if (lPressed && !prevLeft  && !rPressed) leftUntil  = now + rc.left.holdMs;
-    if (rPressed && !prevRight && !lPressed) rightUntil = now + rc.right.holdMs;
+  if (!hazardLatch) {
+    if (lRise && !block) leftUntil  = now + rc.left.holdMs;
+    if (rRise && !block) rightUntil = now + rc.right.holdMs;
     lActive = (int32_t)(now - leftUntil)  < 0;
     rActive = (int32_t)(now - rightUntil) < 0;
   }

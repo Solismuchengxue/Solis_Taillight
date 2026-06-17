@@ -53,7 +53,7 @@ struct RcConfig {
   uint16_t brakeUs;         // 油门脉宽低于(中位-此值)判为刹车
   uint8_t  brakeLedPin;     // 刹车灯带数据脚
   uint16_t brakeLedCount;   // 刹车灯带灯珠数量
-  uint8_t  brakePreset;     // (保留, 未用)
+  uint8_t  hazardMode;      // 双闪触发: 0=左右同时 1=双击任意转向 2=关闭
   // 转向: 左/右各自独立
   TurnSide left;
   TurnSide right;

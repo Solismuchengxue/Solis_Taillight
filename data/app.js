@@ -28,6 +28,8 @@ const I18N = {
     brakeLegend:"刹车 (复用油门通道, 实时)", enableBrake:"启用刹车", throttlePin:"油门脚 GPIO",
     centerUs:"中位 (us)", brakeUs:"刹车阈值 (us)", brakeReverse:"刹车方向反向 (杆量高于中位判刹车)",
     brakeHint:"刹车灯固定为<b>红色常亮</b>(交通标准)。默认油门<b>低于</b>「中位 − 阈值」点亮; 若你的杆量1000是前进, 勾选「方向反向」改成<b>高于</b>「中位 + 阈值」点亮。",
+    hazardLegend:"双闪", hazardTrigger:"触发方式", hzBoth:"左右同时触发", hzDtap:"双击任意转向触发", hzOff:"关闭",
+    hazardHint:"双闪为<b>锁存</b>: 触发一次进入双闪并保持, 再次触发才取消。需启用左右转。",
     saveConfig:"保存配置 (重启生效)",
     monitorLegend:"实时脉宽监视 (标定用)", monThrottle:"油门", monLeft:"左", monRight:"右", monState:"当前判定",
     monitorHint:"拨动遥控器/按转向键, 看脉宽数值, 据此设上面各项阈值。",
@@ -57,6 +59,8 @@ const I18N = {
     brakeLegend:"Brake (throttle channel, realtime)", enableBrake:"Enable brake", throttlePin:"Throttle GPIO",
     centerUs:"Center (us)", brakeUs:"Brake threshold (us)", brakeReverse:"Reverse brake dir (brake = above center)",
     brakeHint:"Brake is fixed <b>solid red</b> (traffic standard). Lit when throttle is <b>below</b> Center − threshold; if your stick 1000 means forward, tick Reverse to light when <b>above</b> Center + threshold.",
+    hazardLegend:"Hazard", hazardTrigger:"Trigger", hzBoth:"Both turns at once", hzDtap:"Double-tap either turn", hzOff:"Off",
+    hazardHint:"Hazard is <b>latched</b>: trigger once to enter and hold, trigger again to cancel. Requires left/right enabled.",
     saveConfig:"Save config (reboots)",
     monitorLegend:"Live pulse monitor (calibration)", monThrottle:"Throttle", monLeft:"Left", monRight:"Right", monState:"State",
     monitorHint:"Move the sticks / press turn keys, watch the pulse values, and set the thresholds above.",
@@ -171,6 +175,7 @@ function load(s) {
   $('#rcRCount').value = R.ledCount; $('#rcRChan').value = R.channelPin;
   $('#rcRHold').value = R.holdMs;
   $('#rcRTrig').value = R.triggerUs; $('#rcRReverse').checked = R.reverse;
+  $('#rcHazardMode').value = rc.hazardMode;
   // 刹车
   $('#rcBrakeEnabled').checked = rc.brakeEnabled;
   $('#rcBrakeReverse').checked = rc.brakeReverse;
@@ -204,6 +209,7 @@ $('#saveConfig').onclick = async () => {
     brakeEnabled:$('#rcBrakeEnabled').checked, brakeReverse:$('#rcBrakeReverse').checked,
     brakeLedPin:+$('#rcBrakeLedPin').value, brakeLedCount:+$('#rcBrakeCount').value,
     brakePin:+$('#rcBrakePin').value, centerUs:+$('#rcCenter').value, brakeUs:+$('#rcBrake').value,
+    hazardMode:+$('#rcHazardMode').value,
     left:{ enabled:$('#rcLEn').checked, ledPin:+$('#rcLLedPin').value, ledCount:+$('#rcLCount').value,
            channelPin:+$('#rcLChan').value, holdMs:+$('#rcLHold').value,
            triggerUs:+$('#rcLTrig').value, reverse:$('#rcLReverse').checked },

@@ -99,6 +99,17 @@
   </div>
   <p class="hint" data-i18n="turnHint">转向固定为<b>琥珀色流水</b>(交通标准)。左右各自独立灯带/通道。点动: 按一下流水「保持时长」后自停; 两点: 接通持续流水、断开即灭。流水方向不对就勾「灯效反向」。改数据脚/启用后设备重启重建灯带。</p>
 
+  <!-- 双闪 -->
+  <fieldset>
+    <legend data-i18n="hazardLegend">双闪</legend>
+    <label><span data-i18n="hazardTrigger">触发方式</span> <select id="rcHazardMode">
+      <option value="0" data-i18n="hzBoth">左右同时触发</option>
+      <option value="1" data-i18n="hzDtap">双击任意转向触发</option>
+      <option value="2" data-i18n="hzOff">关闭</option>
+    </select></label>
+    <p class="hint" data-i18n="hazardHint">双闪为<b>锁存</b>: 触发一次进入双闪并保持, 再次触发才取消。需启用左右转。</p>
+  </fieldset>
+
   <!-- 刹车 -->
   <fieldset class="grid2">
     <legend data-i18n="brakeLegend">刹车 (复用油门通道, 实时)</legend>
