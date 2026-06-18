@@ -22,7 +22,7 @@ static uint32_t lastLeftTap = 0, lastRightTap = 0;   // 双击检测
 
 // 抗电机噪声: 逻辑状态去抖 (候选状态需连续保持 RC_DEBOUNCE_MS 才生效,
 // 滤掉电机开关产生的短毛刺误触发; 40ms≈2个50Hz脉冲周期, 真实操作几乎无感)
-#define RC_DEBOUNCE_MS 40
+#define RC_DEBOUNCE_MS 80
 static bool     brakeCand = false, leftCand = false, rightCand = false;   // 候选(原始)状态
 static bool     brakeDeb  = false, leftDeb  = false, rightDeb  = false;   // 去抖后的稳定状态
 static uint32_t brakeSince = 0, leftSince = 0, rightSince = 0;            // 候选状态起始时刻
